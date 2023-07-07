@@ -187,11 +187,17 @@ setInterval(() => {
   });
 }, TICK_INTERVAL_MS);
 
+const GRAVITY = 1;
+
 // The frame-by-frame logic of your game should live in it's server's tick function. This is often a place to check for collisions, compute score, and so forth
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
   // Move each player with a direction set
   game.player.body.x += PLAYER_SPEED * game.player.direction.x * deltaMs;
   game.player.body.y += PLAYER_SPEED * game.player.yMomentum * deltaMs;
+
+  if (game.player.jumpState == JumpState.Jumping) {
+    game.player.yMomentum += GRAVITY * deltaMs;
+  }
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
