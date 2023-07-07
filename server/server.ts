@@ -33,52 +33,8 @@ const DASH_COOLDOWN = 2000; // in millis
 // An x, y vector representing the spawn location of the player on the map
 const SPAWN_POSITIONS = [
   {
-    x: 512,
-    y: 512,
-  },
-  {
-    x: 24,
-    y: 256,
-  },
-  {
-    x: 1001,
-    y: 750,
-  },
-  {
-    x: 1044,
-    y: 1140,
-  },
-  {
-    x: 120,
-    y: 820,
-  },
-  {
-    x: 610,
-    y: 1050,
-  },
-  {
-    x: 480,
-    y: 1100,
-  },
-  {
-    x: 60,
-    y: 1250,
-  },
-  {
-    x: 1002,
-    y: 256,
-  },
-  {
-    x: 512,
-    y: 2048,
-  },
-  {
-    x: 110,
-    y: 1875,
-  },
-  {
-    x: 1000,
-    y: 1875,
+    x: 0,
+    y: 0,
   },
 ];
 
@@ -88,7 +44,6 @@ const BOUNDARY_WIDTH = 200;
 // An enum which represents the type of body for a given object
 enum BodyType {
   Player,
-  Bullet,
   Wall,
 }
 const PLAYER_SPRITES_COUNT = 9;
@@ -96,27 +51,19 @@ const PLAYER_SPRITES_COUNT = 9;
 // A type to represent a physics body with a type (uses BodyType above)
 type PhysicsBody = Body & { oType: BodyType };
 
+enum JumpState {
+  Grounded,
+  Jumping
+}
+
 // A type which defines the properties of a player used internally on the server (not sent to client)
 type InternalPlayer = {
   id: UserId;
-  nickname?: string;
   body: PhysicsBody;
   direction: Direction;
-  angle: number;
-  isDead: boolean;
-  bullets: number;
-  isReloading: number | undefined;
-  dashCooldown: number | undefined;
-  score: number;
   sprite: number;
-};
-
-// A type which defines the properties of a bullet used internally on the server (not sent to client)
-type InternalBullet = {
-  id: number;
-  playerId: UserId;
-  body: PhysicsBody;
-  angle: number;
+  jumpState: JumpState;
+  yMomentum: number;
 };
 
 // A type which represents the internal state of the server, containing:
@@ -127,11 +74,7 @@ type InternalBullet = {
 //   - isGameEnd: a boolean to track if game has ended
 type InternalState = {
   physics: System;
-  players: InternalPlayer[];
-  bullets: InternalBullet[];
-  winningScore: number;
-  isGameEnd: boolean;
-  winningPlayerId?: UserId;
+  player: InternalPlayer;
 };
 
 // A map which the server uses to contain all room's InternalState instances
@@ -156,33 +99,13 @@ const store: Application = {
       const lobbyInitialConfig = lobbyInfo.initialConfig as InitialConfig | undefined;
 
       if (!rooms.has(roomId)) {
-        rooms.set(roomId, initializeRoom(lobbyInitialConfig?.winningScore ?? 10, lobbyState?.isGameEnd || false));
+        rooms.set(roomId, initializeRoom());
       }
       const game = rooms.get(roomId)!;
 
-      if (game.players.length === lobbyInitialConfig?.capacity) {
-        throw new Error("room is full");
-      }
-      if (game.isGameEnd) {
-        throw new Error("game has ended");
-      }
       // Make sure the player hasn't already spawned
-      if (!game.players.some((player) => player.id === userId)) {
-        // Then create a physics body for the player
-        const spawn = SPAWN_POSITIONS[Math.floor(Math.random() * SPAWN_POSITIONS.length)];
-        const body = game.physics.createCircle(spawn, PLAYER_RADIUS);
-        game.players.push({
-          id: userId,
-          body: Object.assign(body, { oType: BodyType.Player }),
-          direction: { x: 0, y: 0 },
-          angle: 0,
-          isDead: false,
-          bullets: 3,
-          isReloading: undefined,
-          dashCooldown: undefined,
-          score: 0,
-          sprite: Math.floor(Math.random() * PLAYER_SPRITES_COUNT),
-        });
+      if (game.player.id === "") {
+        game.player.id = userId;
         await updateLobbyState(game, roomId);
       }
     } catch (err) {
@@ -201,11 +124,6 @@ const store: Application = {
 
     // Remove the player from the room's state
     const game = rooms.get(roomId)!;
-    const idx = game.players.findIndex((player) => player.id === userId);
-    if (idx >= 0) {
-      game.physics.remove(game.players[idx].body);
-      game.players.splice(idx, 1);
-    }
 
     try {
       await updateLobbyState(game, roomId);
@@ -222,59 +140,21 @@ const store: Application = {
 
     // Get the player, or return out of the function if they don't exist
     const game = rooms.get(roomId)!;
-    const player = game.players.find((player) => player.id === userId);
-    if (player === undefined) {
+    const player = game.player;
+    if (player.id !== userId) {
       return;
     }
 
     // Parse out the data string being sent from the client
     const message: ClientMessage = JSON.parse(Buffer.from(data).toString("utf8"));
     // Handle the various message types, specific to this game
-
-    if (message.type === ClientMessageType.SetNickname) {
-      player.nickname = message.nickname;
-      updateLobbyState(game, roomId);
-    } else if (message.type === ClientMessageType.SetDirection) {
+    if (message.type === ClientMessageType.SetDirection) {
       player.direction = message.direction;
-    } else if (message.type === ClientMessageType.SetAngle) {
-      player.angle = message.angle;
-    } else if (message.type === ClientMessageType.Respawn) {
-      if (player.isDead) {
-        // Respawn player
-        const spawn = SPAWN_POSITIONS[Math.floor(Math.random() * SPAWN_POSITIONS.length)];
-        const body = game.physics.createCircle(spawn, PLAYER_RADIUS);
-        player.direction = { x: 0, y: 0 };
-        player.angle = 0;
-        player.bullets = BULLETS_MAX;
-        player.body = Object.assign(body, { oType: BodyType.Player });
-        player.isReloading = undefined;
-        player.dashCooldown = undefined;
-        player.isDead = false;
+    } else if (message.type === ClientMessageType.Jump) {
+      if (player.jumpState === JumpState.Grounded) {
+        player.jumpState = JumpState.Jumping;
+        player.yMomentum = -1;
       }
-    } else if (message.type === ClientMessageType.Dash) {
-      if (player.isDead) {
-        return;
-      }
-      if (!player.dashCooldown) {
-        player.body.x += DASH_DISTANCE * player.direction.x;
-        player.body.y += DASH_DISTANCE * player.direction.y;
-        player.dashCooldown = Date.now() + DASH_COOLDOWN;
-      }
-    } else if (message.type === ClientMessageType.Shoot) {
-      if (player.isReloading || player.isDead) {
-        return;
-      }
-      player.bullets--;
-      if (player.bullets === 0) {
-        player.isReloading = Date.now() + RELOAD_SPEED;
-      }
-      const body = game.physics.createCircle({ x: player.body.x, y: player.body.y }, BULLET_RADIUS);
-      game.bullets.push({
-        id: Math.floor(Math.random() * 1e6),
-        playerId: player.id,
-        body: Object.assign(body, { oType: BodyType.Bullet }),
-        angle: player.angle,
-      });
     } else if (message.type === ClientMessageType.Ping) {
       const msg: ServerMessage = {
         type: ServerMessageType.PingResponse,
@@ -309,74 +189,22 @@ setInterval(() => {
 
 // The frame-by-frame logic of your game should live in it's server's tick function. This is often a place to check for collisions, compute score, and so forth
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
-  let highScore = 0;
-  let highScorePlayer = "";
   // Move each player with a direction set
-  game.players.forEach((player) => {
-    player.body.x += PLAYER_SPEED * player.direction.x * deltaMs;
-    player.body.y += PLAYER_SPEED * player.direction.y * deltaMs;
-
-    if (player.isReloading && player.isReloading < Date.now()) {
-      player.isReloading = undefined;
-      player.bullets = BULLETS_MAX;
-    }
-
-    if (player.dashCooldown && player.dashCooldown < Date.now()) {
-      player.dashCooldown = undefined;
-    }
-
-    // calc high score (used for end game)
-    if (player.score > highScore) {
-      highScore = player.score;
-      highScorePlayer = player.id;
-    }
-  });
-
-  // Check if game has ended, update state if so
-  if (highScore >= game.winningScore && !game.isGameEnd) {
-    game.isGameEnd = true;
-    endGameCleanup(roomId, game, highScorePlayer);
-  }
-
-  // Move all active bullets along a path based on their radian angle
-  game.bullets.forEach((bullet) => {
-    bullet.body.x += Math.cos(bullet.angle) * BULLET_SPEED * deltaMs;
-    bullet.body.y += Math.sin(bullet.angle) * BULLET_SPEED * deltaMs;
-  });
+  game.player.body.x += PLAYER_SPEED * game.player.direction.x * deltaMs;
+  game.player.body.y += PLAYER_SPEED * game.player.yMomentum * deltaMs;
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
-    if (a.oType === BodyType.Player && b.oType === BodyType.Wall) {
-      a.x -= overlapV.x;
-      a.y -= overlapV.y;
-    } else if (a.oType === BodyType.Player && b.oType === BodyType.Player) {
-      b.x += overlapV.x;
-      b.y += overlapV.y;
-    } else if (a.oType === BodyType.Bullet && b.oType === BodyType.Wall) {
-      game.physics.remove(a);
-      const bulletIdx = game.bullets.findIndex((bullet) => bullet.body === a);
-      if (bulletIdx >= 0) {
-        game.bullets.splice(bulletIdx, 1);
-      }
-    } else if (a.oType === BodyType.Bullet && b.oType === BodyType.Player) {
-      game.physics.remove(a);
-      // Update shooting player's score
-      const bullet = game.bullets.find((bullet) => bullet.body === a);
-      const shooter = game.players.find((p) => p.id === bullet?.playerId);
-      if (shooter) {
-        shooter.score += 1;
-      }
-
-      const bulletIdx = game.bullets.findIndex((bullet) => bullet.body === a);
-      if (bulletIdx >= 0) {
-        game.bullets.splice(bulletIdx, 1);
-      }
-      const player = game.players.find((player) => player.body === b);
-      if (player) {
-        player.isDead = true;
-      }
-      game.physics.remove(b);
-    }
+    // if (a.oType === BodyType.Player && b.oType === BodyType.Wall) {
+    //   a.x -= overlapV.x;
+    //   a.y -= overlapV.y;
+    //   if (overlapV.y !== 0) {
+    //     game.player.jumpState = JumpState.Grounded
+    //   }
+    // } else if (a.oType === BodyType.Player && b.oType === BodyType.Player) {
+    //   b.x += overlapV.x;
+    //   b.y += overlapV.y;
+    // }
   });
 }
 
@@ -385,22 +213,11 @@ function broadcastStateUpdate(roomId: RoomId) {
   const now = Date.now();
   // Map properties in the game's state which the clients need to know about to render the game
   const state: GameState = {
-    players: game.players.map((player) => ({
-      id: player.id,
-      nickname: player.nickname ?? player.id,
-      position: { x: player.body.x, y: player.body.y },
-      aimAngle: player.angle,
-      isDead: player.isDead,
-      bullets: player.bullets,
-      isReloading: player.isReloading,
-      dashCooldown: player.dashCooldown,
-      score: player.score,
-      sprite: player.sprite,
-    })),
-    bullets: game.bullets.map((bullet) => ({
-      id: bullet.id,
-      position: { x: bullet.body.x, y: bullet.body.y },
-    })),
+    player: {
+      id: game.player.id,
+      position: { x: game.player.body.x, y: game.player.body.y },
+      sprite: game.player.sprite,
+    },
   };
 
   // Send the state update to each connected client
@@ -412,7 +229,7 @@ function broadcastStateUpdate(roomId: RoomId) {
   server.broadcastMessage(roomId, Buffer.from(JSON.stringify(msg), "utf8"));
 }
 
-function initializeRoom(winningScore: number, isGameEnd: boolean) {
+function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
   const top = map.top * tileSize;
@@ -434,12 +251,23 @@ function initializeRoom(winningScore: number, isGameEnd: boolean) {
   physics.insert(wallBody(left, bottom, right - left, BOUNDARY_WIDTH)); // bottom
   physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
 
+  physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
+
+  physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
+
+  const player = {
+    id: "",
+    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, PLAYER_RADIUS),
+      { oType: BodyType.Player }),
+    direction: { x: 0 },
+    yMomentum: 0,
+    jumpState: JumpState.Grounded,
+    sprite: 0,
+  }
+
   return {
     physics,
-    players: [],
-    bullets: [],
-    winningScore,
-    isGameEnd,
+    player,
   };
 }
 
@@ -459,16 +287,13 @@ function getDeveloperToken() {
 
 async function endGameCleanup(roomId: string, game: InternalState, winningPlayerId: string) {
   // Update lobby state (to persist end game state and prevent new players from joining)
-  game.winningPlayerId = winningPlayerId;
   await updateLobbyState(game, roomId);
 
   // boot all players and destroy room
   setTimeout(() => {
-    const playerIds = game.players.map((p) => p.id);
-    playerIds.forEach((playerId) => {
-      console.log("disconnecting: ", playerId, roomId);
-      server.closeConnection(roomId, playerId, "game has ended, disconnecting players");
-    });
+    console.log("disconnecting: ", game.player.id, roomId);
+    server.closeConnection(roomId, game.player.id, "game has ended, disconnecting players");
+
     console.log("destroying room: ", roomId);
     roomClient.destroyRoom(
       process.env.HATHORA_APP_ID!,
@@ -480,13 +305,10 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
 
 async function updateLobbyState(game: InternalState, roomId: string) {
   const lobbyState: LobbyState = {
-    playerNicknameMap: Object.fromEntries(game.players.map((player) => [player.id, player.nickname ?? player.id])),
-    isGameEnd: game.isGameEnd,
-    winningPlayerId: game.winningPlayerId,
   };
   return await lobbyClient.setLobbyState(process.env.HATHORA_APP_ID!,
     roomId,
-    { state:lobbyState },
+    { state: lobbyState },
     { headers: { Authorization: `Bearer ${getDeveloperToken()}`, "Content-Type": "application/json" } }
   );
 }

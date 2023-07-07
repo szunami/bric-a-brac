@@ -2,7 +2,6 @@ import { Region } from "@hathora/hathora-cloud-sdk";
 
 export type Direction = {
   x: number;
-  y: number;
 };
 
 export type Position = {
@@ -12,14 +11,7 @@ export type Position = {
 
 export type Player = {
   id: string;
-  nickname: string;
   position: Position;
-  aimAngle: number;
-  isDead: boolean;
-  bullets: number;
-  isReloading: number | undefined;
-  dashCooldown: number | undefined;
-  score: number;
   sprite: number;
 };
 
@@ -29,14 +21,10 @@ export type Bullet = {
 };
 
 export type GameState = {
-  players: Player[];
-  bullets: Bullet[];
+  player: Player;
 };
 
 export type LobbyState = {
-  playerNicknameMap: { [playerId: string]: string };
-  isGameEnd?: boolean;
-  winningPlayerId?: string;
 };
 
 export type InitialConfig = {
