@@ -105,21 +105,6 @@ function App() {
       <GithubCorner />
       <div className="py-5 overflow-hidden" style={{ backgroundColor: "#0E0E1B" }}>
         <div className="md:w-fit mx-auto px-2 md:px-0">
-          <div className={"flex justify-center items-center"}>
-            <div className={"flex justify-center items-center md:items-end"}>
-              <a href="https://hathora.dev" className={"w-[150px] md:w-[207px]"}>
-                <HathoraLogo />
-              </a>
-              <div className={"mx-3 text-hathoraSecondary-400 text-xs md:text-lg text-baseline"}>PRESENTS</div>
-            </div>
-            <a href="/" className={""}>
-              <img src="bullet_mania_logo_light.png" className="h-[40px] md:h-[60px]" alt="logo" />
-            </a>
-          </div>
-          <p className={"visible md:hidden text-neutralgray-400 text-center mt-3"}>
-            Bullet Mania isn't currently playable on mobile <br />
-            <NavLink headingId={"docsTop"}>Skip to documentation</NavLink>
-          </p>
           <div className={"md:mt-4 relative"} style={{ width: GameConfig.width, height: GameConfig.height }}>
             {failedToConnect ? (
               <div className="border text-white flex flex-wrap flex-col justify-center h-full w-full content-center text-secondary-400 text-center">
@@ -138,20 +123,12 @@ function App() {
                     "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl text-neutralgray-550 -left-[220px] top-[272px]"
                   }
                 >
-                  <div>TRY IT</div>
-                  <div>
-                    <Arrow />
-                  </div>
                 </div>
                 <div
                   className={
                     "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl text-neutralgray-550 -left-[290px] top-[658px]"
                   }
                 >
-                  <div>LEARN HOW</div>
-                  <div>
-                    <Arrow />
-                  </div>
                 </div>
                 {connection == null && !roomIdFromUrl ? (
                   <LobbySelector
@@ -170,8 +147,6 @@ function App() {
               </>
             )}
           </div>
-          <Socials roomId={sessionMetadata?.roomId} />
-          <ExplanationText />
         </div>
       </div>
       <Footer />

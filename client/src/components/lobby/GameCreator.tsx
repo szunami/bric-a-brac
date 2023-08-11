@@ -39,22 +39,6 @@ export function GameCreator(props: GameCreatorProps) {
         onSelect={setVisibility}
       />
       <Dropdown className="mb-2" width="w-56" options={Object.values(Region)} selected={region} onSelect={setRegion} />
-      <Dropdown
-        className="mb-2"
-        width="w-56"
-        options={[1, 2, 3, 4, 5, 6, 7]}
-        format={(s) => `${s} players`}
-        selected={capacity}
-        onSelect={(s) => setCapacity(Number(s))}
-      />
-      <Dropdown
-        className="mb-2"
-        width="w-56"
-        options={[5, 10, 15, 20, 25]}
-        format={(s) => `${s} kills to win`}
-        selected={winningScore}
-        onSelect={(s) => setWinningScore(Number(s))}
-      />
       <div className={"flex flex-col items-center"}>
         <div className={"mb-2 flex items-center justify-center"}>
           {!Token.isGoogleToken(playerToken) && (

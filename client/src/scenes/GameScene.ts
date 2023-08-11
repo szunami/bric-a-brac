@@ -31,6 +31,10 @@ export class GameScene extends Scene {
   // The current client's connected player's sprite object
   private player1Sprite: Phaser.GameObjects.Sprite | undefined;
   private player2Sprite: Phaser.GameObjects.Sprite | undefined;
+
+  private player1Score: Phaser.GameObjects.Text | undefined = undefined;
+  private player2Score: Phaser.GameObjects.Text | undefined = undefined;
+
   // The previous tick's aim radians (used to check if aim has changed, before sending an update)
   private prevAimRad = 0;
   // Ammo indicator assets
@@ -99,17 +103,17 @@ export class GameScene extends Scene {
 
     // Display metadata
     const _roomId = this.add
-      .text(300, 4, `Room ID:${this.sessionMetadata?.roomId ?? ""}`, { color: "white" })
+      .text(4, 4, `Room ID:${this.sessionMetadata?.roomId ?? ""}`, { color: "white" })
       .setAlpha(0.8)
       .setScrollFactor(0);
     const _serverUrl = this.add
-      .text(4, 4, this.sessionMetadata?.serverUrl ?? "", { color: "white" })
+      .text(4, 20, this.sessionMetadata?.serverUrl ?? "", { color: "white" })
       .setAlpha(0.8)
       .setScrollFactor(0);
-    const _region = this.add.text(4, 20, this.sessionMetadata?.region ?? "", { color: "white" }).setScrollFactor(0);
+    const _region = this.add.text(4, 36, this.sessionMetadata?.region ?? "", { color: "white" }).setScrollFactor(0);
 
     // Ping indicator
-    const pingText = this.add.text(4, 36, "Ping:", { color: "white" }).setScrollFactor(0);
+    const pingText = this.add.text(4, 52, "Ping:", { color: "white" }).setScrollFactor(0);
     const pings: number[] = [];
 
 
@@ -239,6 +243,24 @@ export class GameScene extends Scene {
       this.player2Sprite.setPosition(state.player2.position.x, state.player2.position.y);
     }
 
+    if (this.player1Score === undefined) {
+      this.player1Score = this.add
+        .text(500, 20, `P1 Score: ${state.player1.score}`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    } else {
+      this.player1Score.setText(`P1 Score: ${state.player1.score}`)
+    }
+
+    if (this.player2Score === undefined) {
+      this.player2Score = this.add
+        .text(500, 580, `P2 Score: ${state.player2.score}`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    } else {
+      this.player2Score.setText(`P2 Score: ${state.player2.score}`)
+    }
+
     state.balls.forEach(ball => {
       if (!this.balls.has(ball.id)) {
         this.balls.set(ball.id, this.add.sprite(
@@ -282,6 +304,7 @@ function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
 function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
   return {
     id: to.id,
+    score: from.score,
     position: {
       x: from.position.x + (to.position.x - from.position.x) * pctElapsed,
       y: from.position.y + (to.position.y - from.position.y) * pctElapsed,

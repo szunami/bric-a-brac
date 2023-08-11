@@ -17,6 +17,7 @@ export type Position = {
 export type Player = {
   id: string;
   position: Position;
+  score: number
 };
 
 export type Brick = {

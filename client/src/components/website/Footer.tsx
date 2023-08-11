@@ -10,60 +10,8 @@ export function Footer() {
       <div className={"font-hathora flex flex-col md:grid md:grid-cols-6 max-w-[880px] mx-auto"}>
         <div className={"hidden md:flex md:col-span-2 flex-col items-start"}>
           <div>
-            <HathoraLogo />
-          </div>
-          <a
-            href="mailto:contact@hathora.dev"
-            className={
-              "mt-8 text-hathoraBrand-500 underline transition duration-150 ease-out hover:text-hathoraSecondary-500"
-            }
-          >
-            contact@hathora.dev
-          </a>
-          <p className={"mt-6 text-neutralgray-400"}>
-            394 Broadway 5th Floor,
-            <br />
-            New York, NY 10013
-          </p>
-        </div>
-        <div className={"ml-[88px] md:ml-0 md:col-span-1 flex flex-col items-start"}>
-          <p className={"font-bold text-neutralgray-200"}>Links</p>
-          <a
-            href="https://hathora.dev"
-            className={"mt-6 text-neutralgray-200 transition duration-150 ease-out hover:text-hathoraSecondary-500"}
-          >
-            Website
-          </a>
-          <a
-            href="https://hathora.dev/docs"
-            className={"mt-4 text-neutralgray-200 transition duration-150 ease-out hover:text-hathoraSecondary-500"}
-          >
-            Documentation
-          </a>
-          <a
-            href="https://hathora.dev/blog"
-            className={"mt-4 text-neutralgray-200 transition duration-150 ease-out hover:text-hathoraSecondary-500"}
-          >
-            Blog
-          </a>
-        </div>
-        <div className={"px-12 mt-16 md:mt-0 md:px-0 md:col-span-3 ml-10"}>
-          <p className="mb-3 font-bold text-neutralgray-200">Sign up to receive our monthly updates</p>
-
-          <div className="footer__newsletter-form">
-            <NewsletterForm />
           </div>
 
-          <p className="mt-8 mb-1 font-bold text-neutralgray-200">Join our community of game devs: </p>
-          <a
-            href={"https://discord.gg/hathora"}
-            target="_blank"
-            rel="noreferrer"
-            className="flex gap-1 mb-3 text-hathoraBrand-500 items-center transition duration-150 ease-out hover:text-hathoraSecondary-500"
-          >
-            <img src={"social-media/icon-discord.svg"} alt={"Hathora Discord"} />
-            Hathora Discord Server
-          </a>
         </div>
       </div>
       <div className="footer_shadow"> </div>
