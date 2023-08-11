@@ -224,12 +224,12 @@ export class GameScene extends Scene {
     if (this.player1Sprite === undefined) {
       console.log("Creating player sprite");
       this.player1Sprite = this.add.sprite(
-        state.player1.position.x,
-        state.player1.position.y,
+        state.player1.position.x + 16,
+        state.player1.position.y + 4,
         "paddle"
       );
     } else {
-      this.player1Sprite.setPosition(state.player1.position.x, state.player1.position.y);
+      this.player1Sprite.setPosition(state.player1.position.x + 16, state.player1.position.y + 4);
     }
 
     if (this.player2Sprite === undefined) {
@@ -240,7 +240,7 @@ export class GameScene extends Scene {
         "paddle"
       );
     } else {
-      this.player2Sprite.setPosition(state.player2.position.x, state.player2.position.y);
+      this.player2Sprite.setPosition(state.player2.position.x + 16, state.player2.position.y + 4);
     }
 
     if (this.player1Score === undefined) {
@@ -276,8 +276,8 @@ export class GameScene extends Scene {
     state.bricks.forEach(brick => {
       if (!this.bricks.has(brick.id)) {
         this.bricks.set(brick.id, this.add.sprite(
-          brick.position.x,
-          brick.position.y,
+          brick.position.x + 16,
+          brick.position.y + 4,
           "brick"
         ));
       }

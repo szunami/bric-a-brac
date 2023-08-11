@@ -172,7 +172,6 @@ const store: Application = {
     const message: ClientMessage = JSON.parse(Buffer.from(data).toString("utf8"));
     // Handle the various message types, specific to this game
     if (message.type === ClientMessageType.SetDirection) {
-      console.debug(`Setting ${userId} direction to ${message.direction}`);
       player.direction = message.direction;
     } else if (message.type === ClientMessageType.Ping) {
       const msg: ServerMessage = {
@@ -380,7 +379,7 @@ function initializeRoom(): InternalState {
 function makeBrick(physics: System, i: number, j: number): InternalBrick {
   return {
     id: i * 9 + j,
-    body: Object.assign(physics.createBox({ x: i * 32, y: j * 8 }, 30, 8),
+    body: Object.assign(physics.createBox({ x: -16 + i * 32, y: j * 8 }, 30, 8),
       { oType: BodyType.Brick }),
   };
 }
