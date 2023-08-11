@@ -62,6 +62,7 @@ enum JumpState {
 // A type which defines the properties of a player used internally on the server (not sent to client)
 type InternalPlayer = {
   id: UserId;
+  score: number;
   body: PhysicsBody;
   direction: Direction;
 };
@@ -232,6 +233,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           x: game.balls[ballIdx].momentum.x,
           y: -1 * game.balls[ballIdx].momentum.y
         };
+        b.setPosition(b.x + overlapV.x, b.y + overlapV.y);
       }
     }
 
@@ -242,6 +244,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           x: game.balls[ballIdx].momentum.x,
           y: -1 * game.balls[ballIdx].momentum.y
         };
+        a.setPosition(a.x - overlapV.x, a.y - overlapV.y);
+
       }
 
       const brickIdx = game.bricks.findIndex((brick) => brick.body === b);
@@ -266,7 +270,23 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
     ball.body.x = ball.body.x + ball.momentum.x * deltaMs;
     ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
+
+    if (ball.body.y > 220) {
+      game.player2.score++;
+      ball.body.y = 100;
+      ball.momentum.x = BALL_SPEED;
+      ball.momentum.y = -BALL_SPEED;
+    }
+
+    if (ball.body.y < -220) {
+      game.player1.score++;
+      ball.body.y = -100;
+      ball.momentum.x = -BALL_SPEED;
+      ball.momentum.y = BALL_SPEED;
+    }
+
   });
+
 }
 
 function broadcastStateUpdate(roomId: RoomId) {
@@ -276,10 +296,12 @@ function broadcastStateUpdate(roomId: RoomId) {
   const state: GameState = {
     player1: {
       id: game.player1.id,
+      score: game.player1.score,
       position: { x: game.player1.body.x, y: game.player1.body.y },
     },
     player2: {
       id: game.player2.id,
+      score: game.player2.score,
       position: { x: game.player2.body.x, y: game.player2.body.y },
     },
     balls: game.balls.map(ball => {
@@ -305,6 +327,7 @@ function initializeRoom(): InternalState {
 
   const player1 = {
     id: "",
+    score: 0,
     body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
       { oType: BodyType.Player }),
     direction: { x: 0 },
@@ -312,6 +335,7 @@ function initializeRoom(): InternalState {
 
   const player2 = {
     id: "",
+    score: 0,
     body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
       { oType: BodyType.Player }),
     direction: { x: 0 },
