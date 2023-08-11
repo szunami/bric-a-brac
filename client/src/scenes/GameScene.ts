@@ -2,7 +2,7 @@ import Phaser, { Math as pMath, Scene } from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
-import { SessionMetadata, GameState, Player } from "../../../common/types";
+import { SessionMetadata, GameState, Player, Ball, Brick } from "../../../common/types";
 import { ClientMessageType, ServerMessageType } from "../../../common/messages";
 import map from "../../../common/map.json";
 
@@ -24,7 +24,8 @@ export class GameScene extends Scene {
   private playersName: Map<string, Phaser.GameObjects.Text> = new Map();
   private playersAmmo: Map<string, Phaser.GameObjects.Text> = new Map();
   // A map of bullet sprites currently in-air
-  private bullets: Map<number, Phaser.GameObjects.Sprite> = new Map();
+  private bricks: Map<number, Phaser.GameObjects.Sprite> = new Map();
+  private balls: Map<number, Phaser.GameObjects.Sprite> = new Map();
   // The Hathora user for the current client's connected player
   private currentUserID: string | undefined;
   // The current client's connected player's sprite object
@@ -48,34 +49,9 @@ export class GameScene extends Scene {
 
   // Called immediately after the constructor, this function is used to preload assets
   preload() {
-    // Load our assets from before
+    this.load.image("paddle", "paddle.png");
+    this.load.image("brick", "brick.png");
     this.load.image("bullet", "bullet.png");
-    this.load.image("player", "player.png");
-    this.load.image("p0_reload", "p0_reload.png");
-    this.load.image("p1_reload", "p1_reload.png");
-    this.load.image("p2_reload", "p2_reload.png");
-    this.load.image("p3_reload", "p3_reload.png");
-    this.load.image("p4_reload", "p4_reload.png");
-    this.load.image("p5_reload", "p5_reload.png");
-    this.load.image("p6_reload", "p6_reload.png");
-    this.load.image("p7_reload", "p7_reload.png");
-    this.load.image("p8_reload", "p8_reload.png");
-    this.load.image("p0", "p0.png");
-    this.load.image("p1", "p1.png");
-    this.load.image("p2", "p2.png");
-    this.load.image("p3", "p3.png");
-    this.load.image("p4", "p4.png");
-    this.load.image("p5", "p5.png");
-    this.load.image("p6", "p6.png");
-    this.load.image("p7", "p7.png");
-    this.load.image("p8", "p8.png");
-    this.load.image("wall", "wall.png");
-    this.load.image("wall_red", "wall_red.png");
-    this.load.image("wall_blue", "wall_blue.png");
-    this.load.image("wall", "wall.png");
-    this.load.image("grass", "grass.png");
-    this.load.image("floor", "floor.png");
-    this.load.image("splash", "splash.png");
   }
 
   init({
@@ -135,10 +111,6 @@ export class GameScene extends Scene {
     const pingText = this.add.text(4, 36, "Ping:", { color: "white" }).setScrollFactor(0);
     const pings: number[] = [];
 
-
-    map.wallsRed.forEach(({ x, y, width, height }) => {
-      this.add.tileSprite(x, y, width, height, "wall_red").setOrigin(0, 0);
-    });
 
     this.setPreloaderPercentage(0.3);
     // Dash indicator
@@ -228,9 +200,13 @@ export class GameScene extends Scene {
     setTimeout(() => {
       this.setPreloaderPercentage(1);
     }, 400);
+
+    this.cameras.main.setBounds(-400, -300, 800, 600);
   }
 
   update() {
+
+
     // If the stateBuffer hasn't been defined, skip this update tick
     if (this.stateBuffer === undefined) {
       return;
@@ -245,19 +221,52 @@ export class GameScene extends Scene {
       this.playerSprite = this.add.sprite(
         state.player.position.x,
         state.player.position.y,
-        "p0"
+        "paddle"
       );
     } else {
       this.playerSprite.setPosition(state.player.position.x, state.player.position.y);
     }
-    console.log("camera: ", this.cameras.main.x, this.cameras.main.y);
-    console.log("sprite: ", this.playerSprite.x, this.playerSprite.y, this.playerSprite.texture);
+
+    state.balls.forEach(ball => {
+      if (!this.balls.has(ball.id)) {
+        this.balls.set(ball.id, this.add.sprite(
+          ball.position.x,
+          ball.position.y,
+          "bullet"
+        ));
+      } else {
+        this.balls.get(ball.id)?.setPosition(ball.position.x, ball.position.y);
+      }
+    });
+
+    state.bricks.forEach(brick => {
+      if (!this.bricks.has(brick.id)) {
+        this.bricks.set(brick.id, this.add.sprite(
+          brick.position.x,
+          brick.position.y,
+          "brick"
+        ));
+      }
+    });
+
+    this.bricks.forEach((brick, id) => {
+      if (!state.bricks.some(otherbrick => otherbrick.id === id)) {
+        brick.destroy();
+        this.bricks.delete(id);
+      }
+    });
+
+    console.debug(this.bricks.size);
+
+
   }
 }
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
   return {
-    player: lerpPlayer(from.player, to.player, pctElapsed)
+    player: lerpPlayer(from.player, to.player, pctElapsed),
+    bricks: from.bricks,
+    balls: to.balls
   };
 }
 
@@ -270,3 +279,5 @@ function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
     },
   };
 }
+
+

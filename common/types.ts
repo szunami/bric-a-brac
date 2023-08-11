@@ -19,8 +19,20 @@ export type Player = {
   position: Position;
 };
 
+export type Brick = {
+  id: number;
+  position: Position;
+}
+
+export type Ball = {
+  id: number;
+  position: Position;
+}
+
 export type GameState = {
   player: Player;
+  balls: Ball[];
+  bricks: Brick[];
 };
 
 export type LobbyState = {
