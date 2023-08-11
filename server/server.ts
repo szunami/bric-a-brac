@@ -21,6 +21,8 @@ const PLAYER_RADIUS = 20; // The player's circular radius, used for collision de
 const PLAYER_SPEED = 200; // The player's movement speed
 const DASH_DISTANCE = 40; // The player's dash distance
 
+const BALL_SPEED = 100;
+
 // Bullet configuration
 const BULLET_RADIUS = 9; // The bullet's circular radius, used for collision detection
 const BULLET_SPEED = 1000; // The bullet's movement speed when shot
@@ -65,11 +67,13 @@ type InternalPlayer = {
 };
 
 type InternalBall = {
+  id: number;
   body: PhysicsBody;
   momentum: Momentum;
 }
 
 type InternalBrick = {
+  id: number;
   body: PhysicsBody;
 }
 
@@ -200,18 +204,43 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
-    console.debug(`Collision between ${a} and ${b}`);
-    // if (a.oType === BodyType.Player && b.oType === BodyType.Wall) {
-    //   a.x -= overlapV.x;
-    //   a.y -= overlapV.y;
-    //   if (overlapV.y !== 0) {
-    //     game.player.jumpState = JumpState.Grounded
-    //   }
-    // } else if (a.oType === BodyType.Player && b.oType === BodyType.Player) {
-    //   b.x += overlapV.x;
-    //   b.y += overlapV.y;
-    // }
+    console.debug(`Collision between ${a.oType} and ${b.oType}`);
+    if (a.oType === BodyType.Player && b.oType === BodyType.Ball) {
+      const ballIdx = game.balls.findIndex((ball) => ball.body === b);
+      if (ballIdx >= 0) {
+        game.balls[ballIdx].momentum = {
+          x: game.balls[ballIdx].momentum.x,
+          y: -1 * game.balls[ballIdx].momentum.y
+        };
+      }
+    } else if (a.oType === BodyType.Ball && b.oType === BodyType.Player) {
+      const ballIdx = game.balls.findIndex((ball) => ball.body === a);
+      if (ballIdx >= 0) {
+        game.balls[ballIdx].momentum = {
+          x: game.balls[ballIdx].momentum.x,
+          y: -1 * game.balls[ballIdx].momentum.y
+        };
+      }
+    }
   });
+
+  game.balls.forEach(ball => {
+    if (ball.body.x > 128) {
+      ball.body.x = 128;
+      ball.momentum.x *= -1;
+    }
+
+    if (ball.body.x < -128) {
+      ball.body.x = -128;
+      ball.momentum.x *= -1;
+    }
+
+    ball.body.x = ball.body.x + ball.momentum.x * deltaMs;
+    ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
+  })
+
+
+
 }
 
 function broadcastStateUpdate(roomId: RoomId) {
@@ -223,6 +252,12 @@ function broadcastStateUpdate(roomId: RoomId) {
       id: game.player.id,
       position: { x: game.player.body.x, y: game.player.body.y },
     },
+    balls: game.balls.map(ball => {
+      return { id: ball.id, position: { x: ball.body.x, y: ball.body.y } };
+    }),
+    bricks: game.bricks.map(brick => {
+      return { id: brick.id, position: { x: brick.body.x, y: brick.body.y } };
+    })
   };
 
   // Send the state update to each connected client
@@ -240,18 +275,24 @@ function initializeRoom(): InternalState {
 
   const player = {
     id: "",
-    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, PLAYER_RADIUS),
+    body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
       { oType: BodyType.Player }),
     direction: { x: 0 },
-    yMomentum: 0,
-    jumpState: JumpState.Grounded,
-    sprite: 0,
   }
 
   return {
     physics,
     player,
-    balls: [],
+    balls: [{
+      id: 0,
+      body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
+        { oType: BodyType.Player }),
+      momentum: {
+        x: BALL_SPEED,
+        y: -BALL_SPEED
+      }
+    }],
+
     bricks: [],
   };
 }
