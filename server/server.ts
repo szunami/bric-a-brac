@@ -85,7 +85,8 @@ type InternalBrick = {
 //   - isGameEnd: a boolean to track if game has ended
 type InternalState = {
   physics: System;
-  player: InternalPlayer;
+  player1: InternalPlayer;
+  player2: InternalPlayer;
   balls: InternalBall[];
   bricks: InternalBrick[];
 };
@@ -117,8 +118,11 @@ const store: Application = {
       const game = rooms.get(roomId)!;
 
       // Make sure the player hasn't already spawned
-      if (game.player.id === "") {
-        game.player.id = userId;
+      if (game.player1.id === "") {
+        game.player1.id = userId;
+        await updateLobbyState(game, roomId);
+      } else if (game.player2.id === "") {
+        game.player2.id = userId;
         await updateLobbyState(game, roomId);
       }
     } catch (err) {
@@ -153,15 +157,21 @@ const store: Application = {
 
     // Get the player, or return out of the function if they don't exist
     const game = rooms.get(roomId)!;
-    const player = game.player;
-    if (player.id !== userId) {
+
+    var player;
+
+    if (game.player1.id == userId) {
+      player = game.player1;
+    } else if (game.player2.id == userId) {
+      player = game.player2;
+    } else {
       return;
     }
-
     // Parse out the data string being sent from the client
     const message: ClientMessage = JSON.parse(Buffer.from(data).toString("utf8"));
     // Handle the various message types, specific to this game
     if (message.type === ClientMessageType.SetDirection) {
+      console.debug(`Setting ${userId} direction to ${message.direction}`);
       player.direction = message.direction;
     } else if (message.type === ClientMessageType.Ping) {
       const msg: ServerMessage = {
@@ -200,14 +210,16 @@ const GRAVITY = 1;
 // The frame-by-frame logic of your game should live in it's server's tick function. This is often a place to check for collisions, compute score, and so forth
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
-  console.debug(`deltaMs: ${deltaMs}`);
+  if (game.player1.id === "" || game.player2.id === "") {
+    return;
+  }
 
   // Move each player with a direction set
-  game.player.body.x += PLAYER_SPEED * game.player.direction.x * deltaMs;
+  game.player1.body.x += PLAYER_SPEED * game.player1.direction.x * deltaMs;
+  game.player2.body.x += PLAYER_SPEED * game.player2.direction.x * deltaMs;
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
-    console.debug(`Collision between ${a.oType} and ${b.oType}`);
     if (a.oType === BodyType.Player && b.oType === BodyType.Ball) {
       const ballIdx = game.balls.findIndex((ball) => ball.body === b);
       if (ballIdx >= 0) {
@@ -249,10 +261,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
     ball.body.x = ball.body.x + ball.momentum.x * deltaMs;
     ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
-  })
-
-
-
+  });
 }
 
 function broadcastStateUpdate(roomId: RoomId) {
@@ -260,9 +269,13 @@ function broadcastStateUpdate(roomId: RoomId) {
   const now = Date.now();
   // Map properties in the game's state which the clients need to know about to render the game
   const state: GameState = {
-    player: {
-      id: game.player.id,
-      position: { x: game.player.body.x, y: game.player.body.y },
+    player1: {
+      id: game.player1.id,
+      position: { x: game.player1.body.x, y: game.player1.body.y },
+    },
+    player2: {
+      id: game.player2.id,
+      position: { x: game.player2.body.x, y: game.player2.body.y },
     },
     balls: game.balls.map(ball => {
       return { id: ball.id, position: { x: ball.body.x, y: ball.body.y } };
@@ -285,16 +298,24 @@ function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
 
-  const player = {
+  const player1 = {
     id: "",
     body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
       { oType: BodyType.Player }),
     direction: { x: 0 },
-  }
+  };
+
+  const player2 = {
+    id: "",
+    body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
+      { oType: BodyType.Player }),
+    direction: { x: 0 },
+  };
 
   return {
     physics,
-    player,
+    player1,
+    player2,
     balls: [{
       id: 0,
       body: Object.assign(physics.createBox({ x: 0, y: 100 }, 32, 8),
@@ -355,8 +376,8 @@ async function endGameCleanup(roomId: string, game: InternalState, winningPlayer
 
   // boot all players and destroy room
   setTimeout(() => {
-    console.log("disconnecting: ", game.player.id, roomId);
-    server.closeConnection(roomId, game.player.id, "game has ended, disconnecting players");
+    console.log("disconnecting: ", game.player1.id, roomId);
+    server.closeConnection(roomId, game.player1.id, "game has ended, disconnecting players");
 
     console.log("destroying room: ", roomId);
     roomClient.destroyRoom(

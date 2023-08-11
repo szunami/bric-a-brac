@@ -30,7 +30,8 @@ export type Ball = {
 }
 
 export type GameState = {
-  player: Player;
+  player1: Player;
+  player2: Player;
   balls: Ball[];
   bricks: Brick[];
 };

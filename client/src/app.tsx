@@ -42,6 +42,7 @@ function App() {
     );
   }
   const roomIdFromUrl = getRoomIdFromUrl();
+  console.debug(`sessionmetadata: ${sessionMetadata?.roomId}`);
   if (
     roomIdFromUrl != null &&
     sessionMetadata?.roomId != roomIdFromUrl &&
@@ -51,18 +52,22 @@ function App() {
     // Once we parse roomId from the URL, get connection details to connect player to the server
     isReadyForConnect(appId, roomClient, lobbyClient, roomIdFromUrl)
       .then(async ({ connectionInfo, lobbyInfo }) => {
+        console.debug("ready for connect");
         setRoomIdNotFound(undefined);
         if (connection != null) {
+          console.debug("connection != null");
           connection.disconnect(1000);
         }
 
         try {
-          const lobbyState = lobbyInfo.state as LobbyState | undefined;
+          const lobbyState = undefined;
           const lobbyInitialConfig = lobbyInfo.initialConfig as InitialConfig | undefined;
 
           if (!lobbyState) {
+            console.debug(`Connecting to room ${roomIdFromUrl}`);
             const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
             connect.onClose(async () => {
+              console.debug("Connection closed");
               // If game has ended, we want updated lobby state
               const updatedLobbyInfo = await lobbyClient.getLobbyInfo(appId, roomIdFromUrl);
               const updatedLobbyState = updatedLobbyInfo.state as LobbyState | undefined;
@@ -75,6 +80,7 @@ function App() {
               });
               setFailedToConnect(true);
             });
+            console.debug(`Setting connection to ${connect}`);
             setConnection(connect);
           }
           setSessionMetadata({
@@ -84,13 +90,16 @@ function App() {
             creatorId: lobbyInfo.createdBy,
           });
         } catch (e) {
+          console.debug(`Roomid not found`);
           setRoomIdNotFound(roomIdFromUrl);
         }
       })
       .catch(() => {
+        console.debug(`Roomid not found`);
         setRoomIdNotFound(roomIdFromUrl);
       });
   }
+  console.debug(`Rendering`);
   return (
     <GoogleOAuthProvider clientId={process.env.GOOGLE_AUTH_CLIENT_ID ?? ""}>
       <GithubCorner />

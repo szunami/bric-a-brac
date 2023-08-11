@@ -29,7 +29,8 @@ export class GameScene extends Scene {
   // The Hathora user for the current client's connected player
   private currentUserID: string | undefined;
   // The current client's connected player's sprite object
-  private playerSprite: Phaser.GameObjects.Sprite | undefined;
+  private player1Sprite: Phaser.GameObjects.Sprite | undefined;
+  private player2Sprite: Phaser.GameObjects.Sprite | undefined;
   // The previous tick's aim radians (used to check if aim has changed, before sending an update)
   private prevAimRad = 0;
   // Ammo indicator assets
@@ -216,15 +217,26 @@ export class GameScene extends Scene {
 
 
     // Synchronize the players in our game's state with sprites to represent them graphically
-    if (this.playerSprite === undefined) {
+    if (this.player1Sprite === undefined) {
       console.log("Creating player sprite");
-      this.playerSprite = this.add.sprite(
-        state.player.position.x,
-        state.player.position.y,
+      this.player1Sprite = this.add.sprite(
+        state.player1.position.x,
+        state.player1.position.y,
         "paddle"
       );
     } else {
-      this.playerSprite.setPosition(state.player.position.x, state.player.position.y);
+      this.player1Sprite.setPosition(state.player1.position.x, state.player1.position.y);
+    }
+
+    if (this.player2Sprite === undefined) {
+      console.log("Creating player sprite");
+      this.player2Sprite = this.add.sprite(
+        state.player2.position.x,
+        state.player2.position.y,
+        "paddle"
+      );
+    } else {
+      this.player2Sprite.setPosition(state.player2.position.x, state.player2.position.y);
     }
 
     state.balls.forEach(ball => {
@@ -255,16 +267,13 @@ export class GameScene extends Scene {
         this.bricks.delete(id);
       }
     });
-
-    console.debug(this.bricks.size);
-
-
   }
 }
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
   return {
-    player: lerpPlayer(from.player, to.player, pctElapsed),
+    player1: lerpPlayer(from.player1, to.player1, pctElapsed),
+    player2: lerpPlayer(from.player2, to.player2, pctElapsed),
     bricks: from.bricks,
     balls: to.balls
   };

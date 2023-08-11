@@ -38,6 +38,7 @@ export async function isReadyForConnect(
   const TRY_CONNECT_INTERVAL_MS = 1000;
 
   const lobbyInfo = await lobbyClient.getLobbyInfo(appId, roomId);
+  console.debug(lobbyInfo);
 
   if (lobbyInfo.visibility === "local") {
     return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
