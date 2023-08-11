@@ -216,7 +216,12 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
   // Move each player with a direction set
   game.player1.body.x += PLAYER_SPEED * game.player1.direction.x * deltaMs;
+  game.player1.body.x = Math.max(Math.min(game.player1.body.x, 128), -128);
+
+
   game.player2.body.x += PLAYER_SPEED * game.player2.direction.x * deltaMs;
+  game.player2.body.x = Math.max(Math.min(game.player2.body.x, 128), -128);
+
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
@@ -312,53 +317,47 @@ function initializeRoom(): InternalState {
     direction: { x: 0 },
   };
 
+  const bricks = [];
+  for (var i = -4; i <= 4; i++) {
+    for (var j = -3; j <= 4; j++) {
+      bricks.push(makeBrick(physics, i, j));
+    }
+  }
+
   return {
     physics,
     player1,
     player2,
     balls: [{
       id: 0,
-      body: Object.assign(physics.createBox({ x: 0, y: 100 }, 32, 8),
+      body: Object.assign(physics.createCircle({ x: 0, y: 100 }, 8),
         { oType: BodyType.Ball }),
       momentum: {
         x: BALL_SPEED,
         y: -BALL_SPEED
       }
-    }],
-
-    bricks: [
-      {
-        id: 0,
-        body: Object.assign(physics.createBox({ x: 0, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
-      },
-      {
-        id: 1,
-        body: Object.assign(physics.createBox({ x: 32, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
-      },
-      {
-        id: 2,
-        body: Object.assign(physics.createBox({ x: -32, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
-      },
-      {
-        id: 3,
-        body: Object.assign(physics.createBox({ x: 64, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
-      },
-      {
-        id: 4,
-        body: Object.assign(physics.createBox({ x: 96, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
-      },
-      {
-        id: 5,
-        body: Object.assign(physics.createBox({ x: 128, y: 0 }, 30, 8),
-          { oType: BodyType.Brick }),
+    },
+    {
+      id: 1,
+      body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
+        { oType: BodyType.Ball }),
+      momentum: {
+        x: -BALL_SPEED,
+        y: BALL_SPEED
       }
+    },
 
     ],
+
+    bricks,
+  };
+}
+
+function makeBrick(physics: System, i: number, j: number): InternalBrick {
+  return {
+    id: i * 9 + j,
+    body: Object.assign(physics.createBox({ x: i * 32, y: j * 8 }, 30, 8),
+      { oType: BodyType.Brick }),
   };
 }
 
