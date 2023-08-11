@@ -199,6 +199,9 @@ const GRAVITY = 1;
 
 // The frame-by-frame logic of your game should live in it's server's tick function. This is often a place to check for collisions, compute score, and so forth
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
+
+  console.debug(`deltaMs: ${deltaMs}`);
+
   // Move each player with a direction set
   game.player.body.x += PLAYER_SPEED * game.player.direction.x * deltaMs;
 
@@ -207,14 +210,6 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     console.debug(`Collision between ${a.oType} and ${b.oType}`);
     if (a.oType === BodyType.Player && b.oType === BodyType.Ball) {
       const ballIdx = game.balls.findIndex((ball) => ball.body === b);
-      if (ballIdx >= 0) {
-        game.balls[ballIdx].momentum = {
-          x: game.balls[ballIdx].momentum.x,
-          y: -1 * game.balls[ballIdx].momentum.y
-        };
-      }
-    } else if (a.oType === BodyType.Ball && b.oType === BodyType.Player) {
-      const ballIdx = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
           x: game.balls[ballIdx].momentum.x,
@@ -231,18 +226,13 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           y: -1 * game.balls[ballIdx].momentum.y
         };
       }
-    }
 
-    else if (a.oType === BodyType.Brick && b.oType === BodyType.Ball) {
-      const ballIdx = game.balls.findIndex((ball) => ball.body === b);
-      if (ballIdx >= 0) {
-        game.balls[ballIdx].momentum = {
-          x: game.balls[ballIdx].momentum.x,
-          y: -1 * game.balls[ballIdx].momentum.y
-        };
+      const brickIdx = game.bricks.findIndex((brick) => brick.body === b);
+      if (brickIdx >= 0) {
+        game.physics.remove(b);
+        game.bricks.splice(brickIdx, 1);
       }
     }
-
 
   });
 
@@ -307,7 +297,7 @@ function initializeRoom(): InternalState {
     player,
     balls: [{
       id: 0,
-      body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
+      body: Object.assign(physics.createBox({ x: 0, y: 100 }, 32, 8),
         { oType: BodyType.Ball }),
       momentum: {
         x: BALL_SPEED,
@@ -318,7 +308,32 @@ function initializeRoom(): InternalState {
     bricks: [
       {
         id: 0,
-        body: Object.assign(physics.createBox({ x: 0, y: 0 }, 32, 8),
+        body: Object.assign(physics.createBox({ x: 0, y: 0 }, 30, 8),
+          { oType: BodyType.Brick }),
+      },
+      {
+        id: 1,
+        body: Object.assign(physics.createBox({ x: 32, y: 0 }, 30, 8),
+          { oType: BodyType.Brick }),
+      },
+      {
+        id: 2,
+        body: Object.assign(physics.createBox({ x: -32, y: 0 }, 30, 8),
+          { oType: BodyType.Brick }),
+      },
+      {
+        id: 3,
+        body: Object.assign(physics.createBox({ x: 64, y: 0 }, 30, 8),
+          { oType: BodyType.Brick }),
+      },
+      {
+        id: 4,
+        body: Object.assign(physics.createBox({ x: 96, y: 0 }, 30, 8),
+          { oType: BodyType.Brick }),
+      },
+      {
+        id: 5,
+        body: Object.assign(physics.createBox({ x: 128, y: 0 }, 30, 8),
           { oType: BodyType.Brick }),
       }
 
