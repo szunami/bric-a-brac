@@ -46,8 +46,7 @@ function App() {
     roomIdFromUrl != null &&
     sessionMetadata?.roomId != roomIdFromUrl &&
     roomIdNotFound == null &&
-    !failedToConnect &&
-    !sessionMetadata?.isGameEnd
+    !failedToConnect
   ) {
     // Once we parse roomId from the URL, get connection details to connect player to the server
     isReadyForConnect(appId, roomClient, lobbyClient, roomIdFromUrl)
@@ -61,7 +60,7 @@ function App() {
           const lobbyState = lobbyInfo.state as LobbyState | undefined;
           const lobbyInitialConfig = lobbyInfo.initialConfig as InitialConfig | undefined;
 
-          if (!lobbyState || !lobbyState.isGameEnd) {
+          if (!lobbyState) {
             const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
             connect.onClose(async () => {
               // If game has ended, we want updated lobby state
@@ -72,11 +71,6 @@ function App() {
                 serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
                 region: updatedLobbyInfo.region,
                 roomId: updatedLobbyInfo.roomId,
-                capacity: updatedLobbyInitialConfig?.capacity ?? 0,
-                winningScore: updatedLobbyInitialConfig?.winningScore ?? 99,
-                isGameEnd: !!updatedLobbyState?.isGameEnd,
-                winningPlayerId: updatedLobbyState?.winningPlayerId,
-                playerNicknameMap: updatedLobbyState?.playerNicknameMap || {},
                 creatorId: updatedLobbyInfo.createdBy,
               });
               setFailedToConnect(true);
@@ -87,11 +81,6 @@ function App() {
             serverUrl: `${connectionInfo.host}:${connectionInfo.port}`,
             region: lobbyInfo.region,
             roomId: lobbyInfo.roomId,
-            capacity: lobbyInitialConfig?.capacity ?? 0,
-            winningScore: lobbyInitialConfig?.winningScore ?? 99,
-            isGameEnd: lobbyState?.isGameEnd ?? false,
-            winningPlayerId: lobbyState?.winningPlayerId,
-            playerNicknameMap: lobbyState?.playerNicknameMap || {},
             creatorId: lobbyInfo.createdBy,
           });
         } catch (e) {
@@ -127,20 +116,7 @@ function App() {
               <div className="border text-white flex flex-wrap flex-col justify-center h-full w-full content-center text-secondary-400 text-center">
                 Connection was closed
                 <br />
-                {sessionMetadata?.isGameEnd ? (
-                  <>
-                    <div className={"text-secondary-600"}>Game has ended</div>
-                    <div className={"text-secondary-600"}>
-                      {`${
-                        sessionMetadata.winningPlayerId
-                          ? sessionMetadata.playerNicknameMap[sessionMetadata.winningPlayerId]
-                          : sessionMetadata.winningPlayerId
-                      } won!`}
-                    </div>
-                  </>
-                ) : (
-                  <span className={"text-secondary-600"}>Game is full</span>
-                )}
+
                 <br />
                 <a href={"/"} className={"mt-2"}>
                   <BulletButton text={"Return to Lobby"} xlarge />
@@ -168,18 +144,14 @@ function App() {
                     <Arrow />
                   </div>
                 </div>
-                {connection == null && !sessionMetadata?.isGameEnd && !roomIdFromUrl ? (
+                {connection == null && !roomIdFromUrl ? (
                   <LobbySelector
                     appId={appId}
                     playerToken={token}
                     roomIdNotFound={roomIdNotFound}
                     setGoogleIdToken={setGoogleIdToken}
                   />
-                ) : !isNicknameAcked && !sessionMetadata?.isGameEnd ? (
-                  <NicknameScreen sessionMetadata={sessionMetadata} setIsNicknameAcked={setIsNicknameAcked} />
-                ) : (
-                  <></>
-                )}
+                ) : <></>}
                 <GameComponent
                   connection={connection}
                   token={token}

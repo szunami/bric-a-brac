@@ -2,7 +2,7 @@ import Phaser, { Math as pMath, Scene } from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
-import { Bullet, SessionMetadata, GameState, Player } from "../../../common/types";
+import { SessionMetadata, GameState, Player } from "../../../common/types";
 import { ClientMessageType, ServerMessageType } from "../../../common/messages";
 import map from "../../../common/map.json";
 
@@ -87,6 +87,8 @@ export class GameScene extends Scene {
     token: string;
     sessionMetadata: SessionMetadata;
   }) {
+    console.debug(`GameScene init`);
+
     // Receive connection and user data from BootScene
     this.connection = connection;
     this.token = token;
@@ -216,10 +218,6 @@ export class GameScene extends Scene {
         prevDirection = direction;
         this.connection?.writeJson({ type: ClientMessageType.SetDirection, direction });
       }
-
-      if (keySpace.isDown) {
-        this.connection?.writeJson({ type: ClientMessageType.Jump });
-      }
     };
     this.setPreloaderPercentage(0.9);
 
@@ -270,6 +268,5 @@ function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
       x: from.position.x + (to.position.x - from.position.x) * pctElapsed,
       y: from.position.y + (to.position.y - from.position.y) * pctElapsed,
     },
-    sprite: to.sprite,
   };
 }

@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { UserId, RoomId, Application, startServer, verifyJwt } from "@hathora/server-sdk";
 import dotenv from "dotenv";
 import { Box, Body, System } from "detect-collisions";
-import { Direction, GameState, InitialConfig, LobbyState } from "../common/types";
+import { Direction, GameState, InitialConfig, LobbyState, Momentum } from "../common/types";
 import { ClientMessage, ClientMessageType, ServerMessage, ServerMessageType } from "../common/messages";
 import map from "../common/map.json" assert { type: "json" };
 
@@ -44,7 +44,8 @@ const BOUNDARY_WIDTH = 200;
 // An enum which represents the type of body for a given object
 enum BodyType {
   Player,
-  Wall,
+  Ball,
+  Brick,
 }
 const PLAYER_SPRITES_COUNT = 9;
 
@@ -61,10 +62,16 @@ type InternalPlayer = {
   id: UserId;
   body: PhysicsBody;
   direction: Direction;
-  sprite: number;
-  jumpState: JumpState;
-  yMomentum: number;
 };
+
+type InternalBall = {
+  body: PhysicsBody;
+  momentum: Momentum;
+}
+
+type InternalBrick = {
+  body: PhysicsBody;
+}
 
 // A type which represents the internal state of the server, containing:
 //   - physics: our "physics" engine (detect-collisions library)
@@ -75,6 +82,8 @@ type InternalPlayer = {
 type InternalState = {
   physics: System;
   player: InternalPlayer;
+  balls: InternalBall[];
+  bricks: InternalBrick[];
 };
 
 // A map which the server uses to contain all room's InternalState instances
@@ -150,11 +159,6 @@ const store: Application = {
     // Handle the various message types, specific to this game
     if (message.type === ClientMessageType.SetDirection) {
       player.direction = message.direction;
-    } else if (message.type === ClientMessageType.Jump) {
-      if (player.jumpState === JumpState.Grounded) {
-        player.jumpState = JumpState.Jumping;
-        player.yMomentum = -1;
-      }
     } else if (message.type === ClientMessageType.Ping) {
       const msg: ServerMessage = {
         type: ServerMessageType.PingResponse,
@@ -193,14 +197,10 @@ const GRAVITY = 1;
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
   // Move each player with a direction set
   game.player.body.x += PLAYER_SPEED * game.player.direction.x * deltaMs;
-  game.player.body.y += PLAYER_SPEED * game.player.yMomentum * deltaMs;
-
-  if (game.player.jumpState == JumpState.Jumping) {
-    game.player.yMomentum += GRAVITY * deltaMs;
-  }
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
+    console.debug(`Collision between ${a} and ${b}`);
     // if (a.oType === BodyType.Player && b.oType === BodyType.Wall) {
     //   a.x -= overlapV.x;
     //   a.y -= overlapV.y;
@@ -222,7 +222,6 @@ function broadcastStateUpdate(roomId: RoomId) {
     player: {
       id: game.player.id,
       position: { x: game.player.body.x, y: game.player.body.y },
-      sprite: game.player.sprite,
     },
   };
 
@@ -238,28 +237,6 @@ function broadcastStateUpdate(roomId: RoomId) {
 function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
-  const top = map.top * tileSize;
-  const left = map.left * tileSize;
-  const bottom = map.bottom * tileSize;
-  const right = map.right * tileSize;
-
-  // Create map wall bodies
-  map.wallsBlue.forEach(({ x, y, width, height }) => {
-    physics.insert(wallBody(x * tileSize, y * tileSize, width * tileSize, height * tileSize));
-  });
-  map.wallsRed.forEach(({ x, y, width, height }) => {
-    physics.insert(wallBody(x * tileSize, y * tileSize, width * tileSize, height * tileSize));
-  });
-
-  // Create map boundary boxes
-  physics.insert(wallBody(left, top - BOUNDARY_WIDTH, right - left, BOUNDARY_WIDTH)); // top
-  physics.insert(wallBody(left - BOUNDARY_WIDTH, top, BOUNDARY_WIDTH, bottom - top)); // left
-  physics.insert(wallBody(left, bottom, right - left, BOUNDARY_WIDTH)); // bottom
-  physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
-
-  physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
-
-  physics.insert(wallBody(right, top, BOUNDARY_WIDTH, bottom - top)); // right
 
   const player = {
     id: "",
@@ -274,13 +251,9 @@ function initializeRoom(): InternalState {
   return {
     physics,
     player,
+    balls: [],
+    bricks: [],
   };
-}
-
-function wallBody(x: number, y: number, width: number, height: number): PhysicsBody {
-  return Object.assign(new Box({ x, y }, width, height, { isStatic: true }), {
-    oType: BodyType.Wall,
-  });
 }
 
 function getDeveloperToken() {

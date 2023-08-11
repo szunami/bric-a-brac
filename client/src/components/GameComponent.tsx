@@ -21,11 +21,15 @@ interface GameComponentProps {
   isNicknameAcked: boolean;
 }
 export function GameComponent(props: GameComponentProps) {
-  const { connection, token, sessionMetadata, isNicknameAcked } = props;
+  const { connection, token, sessionMetadata } = props;
   const [sceneRendered, setSceneRendered] = React.useState<boolean>(false);
+
+  console.log(`Rendering GameComponent: ${sceneRendered}, ${connection}, ${sessionMetadata}`);
+
+
   if (
     !sceneRendered &&
-    ((connection != null && sessionMetadata != null && isNicknameAcked) || sessionMetadata?.isGameEnd)
+    ((connection != null && sessionMetadata != null))
   ) {
     setSceneRendered(true);
     const game = new Game(GameConfig);

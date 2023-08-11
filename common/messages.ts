@@ -3,7 +3,6 @@ import { Direction, GameState } from "./types";
 export enum ClientMessageType {
   SetNickname,
   SetDirection,
-  Jump,
   Ping,
 }
 
@@ -15,7 +14,6 @@ export enum ServerMessageType {
 export type ClientMessage =
   | SetNicknameMessage
   | SetDirectionMessage
-  | JumpMessage
   | PingMessage;
 
 export type SetDirectionMessage = {
@@ -31,10 +29,6 @@ export type SetNicknameMessage = {
 export type PingMessage = {
   type: ClientMessageType.Ping;
   id: number;
-};
-
-export type JumpMessage = {
-  type: ClientMessageType.Jump;
 };
 
 export type ServerMessage = StateUpdateMessage | PingResponseMessage;
