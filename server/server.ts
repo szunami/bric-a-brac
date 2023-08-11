@@ -222,6 +222,28 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         };
       }
     }
+
+    else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick) {
+      const ballIdx = game.balls.findIndex((ball) => ball.body === a);
+      if (ballIdx >= 0) {
+        game.balls[ballIdx].momentum = {
+          x: game.balls[ballIdx].momentum.x,
+          y: -1 * game.balls[ballIdx].momentum.y
+        };
+      }
+    }
+
+    else if (a.oType === BodyType.Brick && b.oType === BodyType.Ball) {
+      const ballIdx = game.balls.findIndex((ball) => ball.body === b);
+      if (ballIdx >= 0) {
+        game.balls[ballIdx].momentum = {
+          x: game.balls[ballIdx].momentum.x,
+          y: -1 * game.balls[ballIdx].momentum.y
+        };
+      }
+    }
+
+
   });
 
   game.balls.forEach(ball => {
@@ -286,14 +308,21 @@ function initializeRoom(): InternalState {
     balls: [{
       id: 0,
       body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
-        { oType: BodyType.Player }),
+        { oType: BodyType.Ball }),
       momentum: {
         x: BALL_SPEED,
         y: -BALL_SPEED
       }
     }],
 
-    bricks: [],
+    bricks: [
+      {
+        id: 0,
+        body: Object.assign(physics.createBox({ x: 0, y: 0 }, 32, 8),
+          { oType: BodyType.Brick }),
+      }
+
+    ],
   };
 }
 
