@@ -2,16 +2,16 @@ import { Lobby } from "@hathora/hathora-cloud-sdk/src/models/index";
 import { LobbyV2Api, RoomV1Api } from "@hathora/hathora-cloud-sdk";
 import { ConnectionDetails } from "@hathora/client-sdk";
 
-// export const LOCAL_CONNECTION_DETAILS: ConnectionDetails = {
-//   host: "localhost",
-//   port: 4000,
-//   transportType: "tcp" as const,
-// };
 export const LOCAL_CONNECTION_DETAILS: ConnectionDetails = {
-    host: "1.proxy.hathora.dev",
-    port: 18181,
-    transportType: "tcp" as const,
-  };
+  host: "localhost",
+  port: 4000,
+  transportType: "tcp" as const,
+};
+// export const LOCAL_CONNECTION_DETAILS: ConnectionDetails = {
+//     host: "1.proxy.hathora.dev",
+//     port: 18181,
+//     transportType: "tcp" as const,
+//   };
 
 
 export type Token = GoogleToken | AnonymousToken;
@@ -46,9 +46,9 @@ export async function isReadyForConnect(
   const lobbyInfo = await lobbyClient.getLobbyInfo(appId, roomId);
   console.debug(lobbyInfo);
 
-  return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
-    resolve({ lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS })
-  );
+  // return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
+  //   resolve({ lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS })
+  // );
 
   if (lobbyInfo.visibility === "local") {
     return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
