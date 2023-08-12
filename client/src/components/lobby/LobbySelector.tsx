@@ -10,11 +10,11 @@ import { GameCreator } from "./GameCreator";
 interface LobbySelectorProps {
   appId: string;
   playerToken: Token;
-  setGoogleIdToken: (idToken: string) => void;
   roomIdNotFound: string | undefined;
+  setRoomId: (roomId: string) => void;
 }
 export function LobbySelector(props: LobbySelectorProps) {
-  const { appId, playerToken, setGoogleIdToken, roomIdNotFound } = props;
+  const { appId, playerToken, roomIdNotFound, setRoomId } = props;
   const [privateLobbyID, setPrivateLobbyID] = React.useState<string>("");
   return (
     <div className="bg-[url('/splash.png')] h-full flex flex-col p-1 relative">
@@ -27,10 +27,10 @@ export function LobbySelector(props: LobbySelectorProps) {
       </div>
       <div className="flex overflow-hidden h-full w-full justify-between">
         <div className="grow">
-          <PublicLobbyList appId={appId} />
+          <PublicLobbyList appId={appId} setRoomId={setRoomId} />
         </div>
         <div className="flex flex-col grow w-[240px]">
-          <GameCreator appId={appId} playerToken={playerToken} setGoogleIdToken={setGoogleIdToken} />
+          <GameCreator appId={appId} playerToken={playerToken} />
           <LobbyPageCard>
             <Header className="mt-3 mb-1">Join Game</Header>
             <input

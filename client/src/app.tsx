@@ -24,12 +24,13 @@ const roomClient = new RoomV1Api();
 
 function App() {
   const appId = process.env.HATHORA_APP_ID;
-  const token = useAuthToken(appId, googleIdToken);
+  const token = useAuthToken(appId);
   const [connection, setConnection] = useState<HathoraConnection | undefined>();
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | undefined>(undefined);
   const [failedToConnect, setFailedToConnect] = useState(false);
   const [roomIdNotFound, setRoomIdNotFound] = useState<string | undefined>(undefined);
   const [isNicknameAcked, setIsNicknameAcked] = React.useState<boolean>(false);
+  const [roomId, setRoomId] = React.useState<string | undefined>(undefined);
 
   if (appId == null || token == null) {
     return (
@@ -40,16 +41,15 @@ function App() {
       </div>
     );
   }
-  const roomIdFromUrl = undefined;
   console.debug(`sessionmetadata: ${sessionMetadata?.roomId}`);
   if (
-    roomIdFromUrl != null &&
-    sessionMetadata?.roomId != roomIdFromUrl &&
+    roomId != null &&
+    sessionMetadata?.roomId != roomId &&
     roomIdNotFound == null &&
     !failedToConnect
   ) {
     // Once we parse roomId from the URL, get connection details to connect player to the server
-    isReadyForConnect(appId, roomClient, lobbyClient, roomIdFromUrl)
+    isReadyForConnect(appId, roomClient, lobbyClient, roomId)
       .then(async ({ connectionInfo, lobbyInfo }) => {
         console.debug("ready for connect");
         setRoomIdNotFound(undefined);
@@ -63,12 +63,12 @@ function App() {
           const lobbyInitialConfig = lobbyInfo.initialConfig as InitialConfig | undefined;
 
           if (!lobbyState) {
-            console.debug(`Connecting to room ${roomIdFromUrl}`);
-            const connect = new HathoraConnection(roomIdFromUrl, connectionInfo);
+            console.debug(`Connecting to room ${roomId}`);
+            const connect = new HathoraConnection(roomId, connectionInfo);
             connect.onClose(async () => {
               console.debug("Connection closed");
               // If game has ended, we want updated lobby state
-              const updatedLobbyInfo = await lobbyClient.getLobbyInfo(appId, roomIdFromUrl);
+              const updatedLobbyInfo = await lobbyClient.getLobbyInfo(appId, roomId);
               const updatedLobbyState = updatedLobbyInfo.state as LobbyState | undefined;
               const updatedLobbyInitialConfig = updatedLobbyInfo.initialConfig as InitialConfig | undefined;
               setSessionMetadata({
@@ -90,12 +90,12 @@ function App() {
           });
         } catch (e) {
           console.debug(`Roomid not found`);
-          setRoomIdNotFound(roomIdFromUrl);
+          setRoomIdNotFound(roomId);
         }
       })
       .catch(() => {
         console.debug(`Roomid not found`);
-        setRoomIdNotFound(roomIdFromUrl);
+        setRoomIdNotFound(roomId);
       });
   }
   return (
@@ -127,12 +127,12 @@ function App() {
                   }
                 >
                 </div>
-                {connection == null && !roomIdFromUrl ? (
+                {connection == null && !roomId ? (
                   <LobbySelector
                     appId={appId}
                     playerToken={token}
                     roomIdNotFound={roomIdNotFound}
-                    setGoogleIdToken={setGoogleIdToken}
+                    setRoomId={setRoomId}
                   />
                 ) : <></>}
                 <GameComponent
@@ -155,13 +155,13 @@ const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement)
 root.render(<App />);
 
 // Custom hook to access auth token
-function useAuthToken(appId: string | undefined, googleIdToken: string | undefined): Token | undefined {
+function useAuthToken(appId: string | undefined): Token | undefined {
   const [token, setToken] = React.useState<Token | undefined>();
   useEffect(() => {
     if (appId != null) {
-      getToken(appId, authClient, googleIdToken).then(setToken);
+      getToken(appId, authClient).then(setToken);
     }
-  }, [appId, googleIdToken]);
+  }, [appId]);
   return token;
 }
 

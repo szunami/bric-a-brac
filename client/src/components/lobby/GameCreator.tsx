@@ -17,10 +17,9 @@ const roomClient = new RoomV1Api();
 interface GameCreatorProps {
   appId: string;
   playerToken: Token;
-  setGoogleIdToken: (idToken: string) => void;
 }
 export function GameCreator(props: GameCreatorProps) {
-  const { appId, playerToken, setGoogleIdToken } = props;
+  const { appId, playerToken } = props;
   const [visibility, setVisibility] = React.useState<"public" | "private" | "local">("public");
   const [region, setRegion] = React.useState<Region>(Region.Chicago);
   const [capacity, setCapacity] = React.useState<number>(6);
@@ -40,26 +39,11 @@ export function GameCreator(props: GameCreatorProps) {
       />
       <Dropdown className="mb-2" width="w-56" options={Object.values(Region)} selected={region} onSelect={setRegion} />
       <div className={"flex flex-col items-center"}>
-        <div className={"mb-2 flex items-center justify-center"}>
-          {!Token.isGoogleToken(playerToken) && (
-            <GoogleLogin
-              onSuccess={(credentialResponse) =>
-                credentialResponse.credential != null
-                  ? setGoogleIdToken(credentialResponse.credential)
-                  : console.error("invalid response from Google Oauth")
-              }
-            />
-          )}
-        </div>
         <div className={"relative"}>
           <button
             onClick={async () => {
               if (!isLoading) {
                 setError("");
-                if (!Token.isGoogleToken(playerToken) && visibility !== "local") {
-                  setError("Google sign-in is required to create a match");
-                  return;
-                }
                 setIsLoading(true);
                 try {
                   const lobby = await lobbyClient.createLobby(appId, playerToken.value, {

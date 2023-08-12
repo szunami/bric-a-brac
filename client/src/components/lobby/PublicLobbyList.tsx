@@ -20,9 +20,10 @@ const roomClient = new RoomV1Api();
 
 interface PublicLobbyListProps {
   appId: string;
+  setRoomId: (roomId: string) => void;
 }
 export function PublicLobbyList(props: PublicLobbyListProps) {
-  const { appId } = props;
+  const { appId, setRoomId } = props;
   const lobbies = useLobbies(appId);
   const [readyRooms, setReadyRooms] = React.useState<Set<string>>(new Set());
   useEffect(() => {
@@ -47,9 +48,8 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
           </tr>
         </thead>
         <tbody
-          className={`flex flex-col items-center ${
-            lobbies.length > 8 ? "overflow-y-scroll" : "overflow-y-auto"
-          } w-full`}
+          className={`flex flex-col items-center ${lobbies.length > 8 ? "overflow-y-scroll" : "overflow-y-auto"
+            } w-full`}
           style={{ maxHeight: "330px" }}
         >
           {lobbies.length > 0 ? (
@@ -65,31 +65,24 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
                     className={"flex w-full text-secondary-900 odd:bg-secondary-600"}
                   >
                     <td
-                      className={`w-24 border-r text-xs flex items-center justify-center ${
-                        index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
-                      }`}
+                      className={`w-24 border-r text-xs flex items-center justify-center ${index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
+                        }`}
                     >{`${lobby.roomId}`}</td>
                     <td
-                      className={`w-16 border-r text-sm flex items-center justify-center ${
-                        index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
-                      }`}
+                      className={`w-16 border-r text-sm flex items-center justify-center ${index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
+                        }`}
                     >
                       <div className={"flex items-center justify-center gap-1"}>
                         <UsersIcon className="h-4 w-4 text-secondary-700" />
-                        {`${lobbyState?.playerNicknameMap ? Object.keys(lobbyState.playerNicknameMap).length : 0}/${
-                          lobbyInitialConfig?.capacity ?? "n/a"
-                        }`}
                       </div>
                     </td>
                     <td
-                      className={`w-56 col-span-2 flex justify-around px-0.5 py-0.5 text-xs border-r ${
-                        index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
-                      }`}
+                      className={`w-56 col-span-2 flex justify-around px-0.5 py-0.5 text-xs border-r ${index % 2 === 0 ? "border-secondary-400" : "border-secondary-600"
+                        }`}
                     >
                       <div className={"grid grid-cols-2 grid-rows-2 gap-x-1"}>
-                        <div className={"flex items-center text-xxs"}>{`${FLAG_TABLE[lobby.region]} ${
-                          lobby.region
-                        }`}</div>
+                        <div className={"flex items-center text-xxs"}>{`${FLAG_TABLE[lobby.region]} ${lobby.region
+                          }`}</div>
                         <div className={"flex items-center gap-1 text-xxs"}>
                           <ClockIcon className="h-4 w-4 text-secondary-700" />
                           <span className={"max-w-[160px] text-ellipsis overflow-hidden whitespace-nowrap"}>{`${dayjs(
@@ -98,39 +91,24 @@ export function PublicLobbyList(props: PublicLobbyListProps) {
                         </div>
                         <div className={"flex items-center"}>
                           <UserIcon className="h-4 w-4 text-secondary-700 text-xxs" />
-                          {lobbyState && lobbyState.playerNicknameMap[lobby.createdBy] ? (
-                            `${lobbyState.playerNicknameMap[lobby.createdBy]}`
-                          ) : (
-                            <span className="italic">creator left</span>
-                          )}
                         </div>
                         <div className={"flex items-center gap-1 text-xxs"}>
                           <TrophyIcon className="h-4 w-4 text-secondary-700" />
-                          {`${lobbyInitialConfig?.winningScore ?? "n/a"} kills to win`}
                         </div>
                       </div>
                     </td>
                     <td className={"w-20"}>
-                      {lobbyState?.isGameEnd ? (
-                        <div className={"leading-4 mt-0.5"}>
-                          <span>GAME ENDED</span>
-                        </div>
-                      ) : (
+                      {(
                         <button
                           className={"mt-2"}
                           onClick={() => {
-                            if (
-                              !lobbyState ||
-                              Object.keys(lobbyState.playerNicknameMap).length < (lobbyInitialConfig?.capacity ?? 0)
-                            ) {
-                              window.location.href = `/${lobby.roomId}`; //update url
-                            }
+                            console.debug("Join room!");
+                            setRoomId(lobby.roomId);
                           }}
                         >
                           <BulletButton
                             disabled={
-                              lobbyState &&
-                              Object.keys(lobbyState.playerNicknameMap).length >= (lobbyInitialConfig?.capacity ?? 0)
+                              false
                             }
                             text={"JOIN!"}
                           />
