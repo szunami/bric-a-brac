@@ -30,7 +30,7 @@ export function LobbySelector(props: LobbySelectorProps) {
           <PublicLobbyList appId={appId} setRoomId={setRoomId} />
         </div>
         <div className="flex flex-col grow w-[240px]">
-          <GameCreator appId={appId} playerToken={playerToken} />
+          <GameCreator appId={appId} playerToken={playerToken} setRoomId={setRoomId} />
           <LobbyPageCard>
             <Header className="mt-3 mb-1">Join Game</Header>
             <input
@@ -41,7 +41,7 @@ export function LobbySelector(props: LobbySelectorProps) {
               onChange={(e) => setPrivateLobbyID(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  window.location.href = `/${privateLobbyID}`;
+                  setRoomId(privateLobbyID);
                 }
               }}
             />

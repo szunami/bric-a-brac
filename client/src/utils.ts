@@ -44,11 +44,6 @@ export async function isReadyForConnect(
   const TRY_CONNECT_INTERVAL_MS = 1000;
 
   const lobbyInfo = await lobbyClient.getLobbyInfo(appId, roomId);
-  console.debug(lobbyInfo);
-
-  // return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
-  //   resolve({ lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS })
-  // );
 
   if (lobbyInfo.visibility === "local") {
     return new Promise<{ lobbyInfo: Lobby; connectionInfo: ConnectionDetails }>((resolve) =>
@@ -60,7 +55,6 @@ export async function isReadyForConnect(
     const res = await roomClient.getConnectionInfo(appId, roomId);
     if (res.status === "active") {
       return { lobbyInfo, connectionInfo: res };
-      // return { lobbyInfo, connectionInfo: LOCAL_CONNECTION_DETAILS };
     }
     await new Promise((resolve) => setTimeout(resolve, TRY_CONNECT_INTERVAL_MS));
   }

@@ -2,7 +2,7 @@ import Phaser, { Math as pMath, Scene } from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "@hathora/client-sdk";
 
-import { SessionMetadata, GameState, Player, Ball, Brick } from "../../../common/types";
+import { SessionMetadata, GameState, Player, Ball, Brick, BrickType } from "../../../common/types";
 import { ClientMessageType, ServerMessageType } from "../../../common/messages";
 import map from "../../../common/map.json";
 
@@ -56,6 +56,7 @@ export class GameScene extends Scene {
   preload() {
     this.load.image("paddle", "paddle.png");
     this.load.image("brick", "brick.png");
+    this.load.image("special_brick", "special_brick.png");
     this.load.image("bullet", "bullet.png");
   }
 
@@ -273,13 +274,28 @@ export class GameScene extends Scene {
       }
     });
 
+    this.balls.forEach((ball, id) => {
+      if (!state.balls.some(otherbrick => otherbrick.id === id)) {
+        ball.destroy();
+        this.balls.delete(id);
+      }
+    });
+
     state.bricks.forEach(brick => {
       if (!this.bricks.has(brick.id)) {
-        this.bricks.set(brick.id, this.add.sprite(
-          brick.position.x + 16,
-          brick.position.y + 4,
-          "brick"
-        ));
+        if (brick.brickType === BrickType.Normal) {
+          this.bricks.set(brick.id, this.add.sprite(
+            brick.position.x + 16,
+            brick.position.y + 4,
+            "brick"
+          ));
+        } else {
+          this.bricks.set(brick.id, this.add.sprite(
+            brick.position.x + 16,
+            brick.position.y + 4,
+            "special_brick"
+          ));
+        }
       }
     });
 

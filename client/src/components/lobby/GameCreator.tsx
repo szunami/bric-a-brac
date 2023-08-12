@@ -17,9 +17,10 @@ const roomClient = new RoomV1Api();
 interface GameCreatorProps {
   appId: string;
   playerToken: Token;
+  setRoomId: (roomId: string) => void;
 }
 export function GameCreator(props: GameCreatorProps) {
-  const { appId, playerToken } = props;
+  const { appId, playerToken, setRoomId } = props;
   const [visibility, setVisibility] = React.useState<"public" | "private" | "local">("public");
   const [region, setRegion] = React.useState<Region>(Region.Chicago);
   const [capacity, setCapacity] = React.useState<number>(6);
@@ -53,7 +54,7 @@ export function GameCreator(props: GameCreatorProps) {
                   });
                   // Wait until lobby connection details are ready before redirect player to match
                   await isReadyForConnect(appId, roomClient, lobbyClient, lobby.roomId);
-                  window.location.href = `/${lobby.roomId}`; //update url
+                  setRoomId(lobby.roomId);
                 } catch (e) {
                   setError(e instanceof Error ? e.toString() : typeof e === "string" ? e : "Unknown error");
                 } finally {

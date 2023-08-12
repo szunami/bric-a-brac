@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { UserId, RoomId, Application, startServer, verifyJwt } from "@hathora/server-sdk";
 import dotenv from "dotenv";
 import { Box, Body, System } from "detect-collisions";
-import { Direction, GameState, InitialConfig, LobbyState, Momentum } from "../common/types";
+import { BrickType, Direction, GameState, InitialConfig, LobbyState, Momentum } from "../common/types";
 import { ClientMessage, ClientMessageType, ServerMessage, ServerMessageType } from "../common/messages";
 import map from "../common/map.json" assert { type: "json" };
 
@@ -54,11 +54,6 @@ const PLAYER_SPRITES_COUNT = 9;
 // A type to represent a physics body with a type (uses BodyType above)
 type PhysicsBody = Body & { oType: BodyType };
 
-enum JumpState {
-  Grounded,
-  Jumping
-}
-
 // A type which defines the properties of a player used internally on the server (not sent to client)
 type InternalPlayer = {
   id: UserId;
@@ -73,9 +68,11 @@ type InternalBall = {
   momentum: Momentum;
 }
 
+
 type InternalBrick = {
   id: number;
   body: PhysicsBody;
+  brickType: BrickType;
 }
 
 // A type which represents the internal state of the server, containing:
@@ -237,31 +234,50 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick) {
-      const ballIdx = game.balls.findIndex((ball) => ball.body === a);
+      const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
           x: game.balls[ballIdx].momentum.x,
           y: -1 * game.balls[ballIdx].momentum.y
         };
         a.setPosition(a.x - overlapV.x, a.y - overlapV.y);
-
       }
 
       const brickIdx = game.bricks.findIndex((brick) => brick.body === b);
       if (brickIdx >= 0) {
+
+        if (game.bricks[brickIdx].brickType === BrickType.Ball) {
+          const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+          const newMomentum = {
+            x: -1 * game.balls[ballIdx].momentum.x,
+            y: -1 * game.balls[ballIdx].momentum.y
+          };
+          game.balls.push({
+            id: newBallId,
+            momentum: newMomentum,
+            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 8),
+              { oType: BodyType.Ball })
+          });
+        }
+
         game.physics.remove(b);
         game.bricks.splice(brickIdx, 1);
+
+
       }
     }
 
   });
 
-  game.balls.forEach(ball => {
+  var ballIdx = 0;
+
+  while (ballIdx < game.balls.length) {
+    const ball = game.balls[ballIdx];
+
     if (ball.body.x > 128) {
       ball.body.x = 128;
       ball.momentum.x *= -1;
     }
-
     if (ball.body.x < -128) {
       ball.body.x = -128;
       ball.momentum.x *= -1;
@@ -271,18 +287,56 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
 
     if (ball.body.y > 220) {
-      game.player2.score++;
-      ball.body.y = 100;
-      ball.momentum.x = BALL_SPEED;
-      ball.momentum.y = -BALL_SPEED;
+      game.player1.score++;
+
+      game.physics.remove(ball.body);
+      game.balls.splice(ballIdx, 1);
+
+      const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+
+      const newBall = {
+        id: newBallId,
+        momentum: {
+          x: BALL_SPEED,
+          y: -BALL_SPEED
+        },
+        body: Object.assign(game.physics.createCircle({ x: 0, y: 100 }, 8),
+          { oType: BodyType.Ball }
+        ),
+      };
+
+      game.balls.push(newBall);
+
+      continue;
     }
 
     if (ball.body.y < -220) {
-      game.player1.score++;
-      ball.body.y = -100;
-      ball.momentum.x = -BALL_SPEED;
-      ball.momentum.y = BALL_SPEED;
+      game.player2.score++;
+
+      game.physics.remove(ball.body);
+      game.balls.splice(ballIdx, 1);
+
+      const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+
+      const newBall = {
+        id: newBallId,
+        momentum: {
+          x: -BALL_SPEED,
+          y: BALL_SPEED
+        },
+        body: Object.assign(game.physics.createCircle({ x: 0, y: -100 }, 8),
+          { oType: BodyType.Ball }
+        ),
+      };
+
+      game.balls.push(newBall);
+      continue;
     }
+    ballIdx++;
+  }
+
+  game.balls.forEach((ball, ballIdx) => {
+
 
   });
 
@@ -307,7 +361,7 @@ function broadcastStateUpdate(roomId: RoomId) {
       return { id: ball.id, position: { x: ball.body.x, y: ball.body.y } };
     }),
     bricks: game.bricks.map(brick => {
-      return { id: brick.id, position: { x: brick.body.x, y: brick.body.y } };
+      return { id: brick.id, position: { x: brick.body.x, y: brick.body.y }, brickType: brick.brickType };
     })
   };
 
@@ -377,10 +431,15 @@ function initializeRoom(): InternalState {
 }
 
 function makeBrick(physics: System, i: number, j: number): InternalBrick {
+  var brickType = BrickType.Normal;
+  if (Math.random() < 0.1) {
+    brickType = BrickType.Ball;
+  }
   return {
     id: i * 9 + j,
     body: Object.assign(physics.createBox({ x: -16 + i * 32, y: j * 8 }, 30, 8),
       { oType: BodyType.Brick }),
+    brickType,
   };
 }
 

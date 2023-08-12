@@ -20,9 +20,16 @@ export type Player = {
   score: number
 };
 
+export enum BrickType {
+  Normal,
+  Ball
+}
+
+
 export type Brick = {
   id: number;
   position: Position;
+  brickType: BrickType;
 }
 
 export type Ball = {
