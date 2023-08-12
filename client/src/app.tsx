@@ -24,7 +24,6 @@ const roomClient = new RoomV1Api();
 
 function App() {
   const appId = process.env.HATHORA_APP_ID;
-  const [googleIdToken, setGoogleIdToken] = useState<string | undefined>();
   const token = useAuthToken(appId, googleIdToken);
   const [connection, setConnection] = useState<HathoraConnection | undefined>();
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | undefined>(undefined);
@@ -41,7 +40,7 @@ function App() {
       </div>
     );
   }
-  const roomIdFromUrl = getRoomIdFromUrl();
+  const roomIdFromUrl = undefined;
   console.debug(`sessionmetadata: ${sessionMetadata?.roomId}`);
   if (
     roomIdFromUrl != null &&
@@ -99,10 +98,8 @@ function App() {
         setRoomIdNotFound(roomIdFromUrl);
       });
   }
-  console.debug(`Rendering`);
   return (
-    <GoogleOAuthProvider clientId={process.env.GOOGLE_AUTH_CLIENT_ID ?? ""}>
-      <GithubCorner />
+    <>
       <div className="py-5 overflow-hidden" style={{ backgroundColor: "#0E0E1B" }}>
         <div className="md:w-fit mx-auto px-2 md:px-0">
           <div className={"md:mt-4 relative"} style={{ width: GameConfig.width, height: GameConfig.height }}>
@@ -150,7 +147,7 @@ function App() {
         </div>
       </div>
       <Footer />
-    </GoogleOAuthProvider>
+    </>
   );
 }
 
@@ -171,23 +168,9 @@ function useAuthToken(appId: string | undefined, googleIdToken: string | undefin
 // 1. Check sessionStorage for existing token
 // 2. If googleIdToken passed, use it for auth and store token
 // 3. If none above, then use anonymous auth
-async function getToken(appId: string, client: AuthV1Api, googleIdToken: string | undefined): Promise<Token> {
-  const maybeToken = sessionStorage.getItem("bullet-mania-token");
-  const maybeTokenType = sessionStorage.getItem("bullet-mania-token-type");
-  if (maybeToken !== null && maybeTokenType != null) {
-    return {
-      type: maybeTokenType,
-      value: maybeToken,
-    } as Token;
-  }
-  if (googleIdToken == null) {
-    const { token } = await client.loginAnonymous(appId);
-    return { value: token, type: "anonymous" };
-  }
-  const { token } = await client.loginGoogle(appId, { idToken: googleIdToken });
-  sessionStorage.setItem("bullet-mania-token", token);
-  sessionStorage.setItem("bullet-mania-token-type", "google");
-  return { value: token, type: "google" };
+async function getToken(appId: string, client: AuthV1Api): Promise<Token> {
+  const { token } = await client.loginAnonymous(appId);
+  return { value: token, type: "anonymous" };
 }
 
 function getRoomIdFromUrl(): string | undefined {
