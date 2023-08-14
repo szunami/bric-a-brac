@@ -292,22 +292,21 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       game.physics.remove(ball.body);
       game.balls.splice(ballIdx, 1);
 
-      const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
-
-      const newBall = {
-        id: newBallId,
-        momentum: {
-          x: BALL_SPEED,
-          y: -BALL_SPEED
-        },
-        body: Object.assign(game.physics.createCircle({ x: 0, y: 100 }, 8),
-          { oType: BodyType.Ball }
-        ),
-      };
-
-      game.balls.push(newBall);
-
-      continue;
+      if (game.balls.length < 2) {
+        const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+        const newBall = {
+          id: newBallId,
+          momentum: {
+            x: BALL_SPEED,
+            y: -BALL_SPEED
+          },
+          body: Object.assign(game.physics.createCircle({ x: 0, y: 100 }, 8),
+            { oType: BodyType.Ball }
+          ),
+        };
+        game.balls.push(newBall);
+        continue;
+      }
     }
 
     if (ball.body.y < -220) {
@@ -316,21 +315,25 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       game.physics.remove(ball.body);
       game.balls.splice(ballIdx, 1);
 
-      const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+      if (game.balls.length < 2) {
 
-      const newBall = {
-        id: newBallId,
-        momentum: {
-          x: -BALL_SPEED,
-          y: BALL_SPEED
-        },
-        body: Object.assign(game.physics.createCircle({ x: 0, y: -100 }, 8),
-          { oType: BodyType.Ball }
-        ),
-      };
+        const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
 
-      game.balls.push(newBall);
-      continue;
+        const newBall = {
+          id: newBallId,
+          momentum: {
+            x: -BALL_SPEED,
+            y: BALL_SPEED
+          },
+          body: Object.assign(game.physics.createCircle({ x: 0, y: -100 }, 8),
+            { oType: BodyType.Ball }
+          ),
+        };
+
+        game.balls.push(newBall);
+        continue;
+      }
+
     }
     ballIdx++;
   }
