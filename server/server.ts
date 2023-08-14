@@ -47,7 +47,8 @@ const BOUNDARY_WIDTH = 200;
 enum BodyType {
   Player,
   Ball,
-  Brick,
+  Brick1,
+  Brick2,
 }
 const PLAYER_SPRITES_COUNT = 9;
 
@@ -58,8 +59,9 @@ type PhysicsBody = Body & { oType: BodyType };
 type InternalPlayer = {
   id: UserId;
   score: number;
-  body: PhysicsBody;
   direction: Direction;
+
+  bricks: InternalBrick[];
 };
 
 type InternalBall = {
@@ -86,7 +88,6 @@ type InternalState = {
   player1: InternalPlayer;
   player2: InternalPlayer;
   balls: InternalBall[];
-  bricks: InternalBrick[];
 };
 
 // A map which the server uses to contain all room's InternalState instances
@@ -211,14 +212,14 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     return;
   }
 
-  // Move each player with a direction set
-  game.player1.body.x += PLAYER_SPEED * game.player1.direction.x * deltaMs;
-  game.player1.body.x = Math.max(Math.min(game.player1.body.x, 128), -128);
+  // todo: clamp this somehow
+  game.player1.bricks.forEach((brick) => {
+    brick.body.x += PLAYER_SPEED * game.player1.direction.x * deltaMs;
+  });
 
-
-  game.player2.body.x += PLAYER_SPEED * game.player2.direction.x * deltaMs;
-  game.player2.body.x = Math.max(Math.min(game.player2.body.x, 128), -128);
-
+  game.player2.bricks.forEach((brick) => {
+    brick.body.x += PLAYER_SPEED * game.player2.direction.x * deltaMs;
+  });
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
@@ -233,7 +234,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       }
     }
 
-    else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick) {
+    else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick1) {
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
@@ -243,10 +244,10 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         a.setPosition(a.x - overlapV.x, a.y - overlapV.y);
       }
 
-      const brickIdx = game.bricks.findIndex((brick) => brick.body === b);
+      const brickIdx = game.player1.bricks.findIndex((brick) => brick.body === b);
       if (brickIdx >= 0) {
 
-        if (game.bricks[brickIdx].brickType === BrickType.Ball) {
+        if (game.player1.bricks[brickIdx].brickType === BrickType.Ball) {
           const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
           const newMomentum = {
             x: -1 * game.balls[ballIdx].momentum.x,
@@ -261,9 +262,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         }
 
         game.physics.remove(b);
-        game.bricks.splice(brickIdx, 1);
-
-
+        game.player1.bricks.splice(brickIdx, 1);
       }
     }
 
@@ -353,19 +352,28 @@ function broadcastStateUpdate(roomId: RoomId) {
     player1: {
       id: game.player1.id,
       score: game.player1.score,
-      position: { x: game.player1.body.x, y: game.player1.body.y },
+      bricks: game.player1.bricks.map((brick) => {
+        return {
+          id: brick.id,
+          position: { x: brick.body.x, y: brick.body.y },
+          brickType: brick.brickType
+        };
+      }),
     },
     player2: {
       id: game.player2.id,
       score: game.player2.score,
-      position: { x: game.player2.body.x, y: game.player2.body.y },
+      bricks: game.player2.bricks.map((brick) => {
+        return {
+          id: brick.id,
+          position: { x: brick.body.x, y: brick.body.y },
+          brickType: brick.brickType
+        };
+      }),
     },
     balls: game.balls.map(ball => {
       return { id: ball.id, position: { x: ball.body.x, y: ball.body.y } };
     }),
-    bricks: game.bricks.map(brick => {
-      return { id: brick.id, position: { x: brick.body.x, y: brick.body.y }, brickType: brick.brickType };
-    })
   };
 
   // Send the state update to each connected client
@@ -381,28 +389,34 @@ function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
 
-  const player1 = {
+  const player1: InternalPlayer = {
     id: "",
     score: 0,
-    body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
-      { oType: BodyType.Player }),
     direction: { x: 0 },
+
+    bricks: [{
+      id: 0,
+      brickType: BrickType.Normal,
+      body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
+        { oType: BodyType.Brick1 })
+    }],
   };
 
-  const player2 = {
+  const player2: InternalPlayer = {
     id: "",
     score: 0,
-    body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
-      { oType: BodyType.Player }),
     direction: { x: 0 },
-  };
 
-  const bricks = [];
-  for (var i = -4; i <= 4; i++) {
-    for (var j = -3; j <= 4; j++) {
-      bricks.push(makeBrick(physics, i, j));
-    }
-  }
+    bricks: [
+      {
+        id: 1,
+        brickType: BrickType.Normal,
+        body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
+          { oType: BodyType.Brick1 })
+      }
+
+    ],
+  };
 
   return {
     physics,
@@ -426,23 +440,8 @@ function initializeRoom(): InternalState {
         y: BALL_SPEED
       }
     },
-
     ],
 
-    bricks,
-  };
-}
-
-function makeBrick(physics: System, i: number, j: number): InternalBrick {
-  var brickType = BrickType.Normal;
-  if (Math.random() < 0.1) {
-    brickType = BrickType.Ball;
-  }
-  return {
-    id: i * 9 + j,
-    body: Object.assign(physics.createBox({ x: -16 + i * 32, y: j * 8 }, 30, 8),
-      { oType: BodyType.Brick }),
-    brickType,
   };
 }
 

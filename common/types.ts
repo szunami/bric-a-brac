@@ -16,8 +16,9 @@ export type Position = {
 
 export type Player = {
   id: string;
-  position: Position;
-  score: number
+  score: number;
+
+  bricks: Brick[];
 };
 
 export enum BrickType {
@@ -41,7 +42,6 @@ export type GameState = {
   player1: Player;
   player2: Player;
   balls: Ball[];
-  bricks: Brick[];
 };
 
 export type LobbyState = {

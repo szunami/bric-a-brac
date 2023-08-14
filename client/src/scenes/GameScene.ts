@@ -221,29 +221,6 @@ export class GameScene extends Scene {
     const { state } = this.stateBuffer.getInterpolatedState(Date.now());
 
 
-    // Synchronize the players in our game's state with sprites to represent them graphically
-    if (this.player1Sprite === undefined) {
-      console.log("Creating player sprite");
-      this.player1Sprite = this.add.sprite(
-        state.player1.position.x + 16,
-        state.player1.position.y + 4,
-        "paddle"
-      );
-    } else {
-      this.player1Sprite.setPosition(state.player1.position.x + 16, state.player1.position.y + 4);
-    }
-
-    if (this.player2Sprite === undefined) {
-      console.log("Creating player sprite");
-      this.player2Sprite = this.add.sprite(
-        state.player2.position.x,
-        state.player2.position.y,
-        "paddle"
-      );
-    } else {
-      this.player2Sprite.setPosition(state.player2.position.x + 16, state.player2.position.y + 4);
-    }
-
     if (this.player1Score === undefined) {
       this.player1Score = this.add
         .text(500, 20, `P1 Score: ${state.player1.score}`, { color: "white" })
@@ -281,7 +258,7 @@ export class GameScene extends Scene {
       }
     });
 
-    state.bricks.forEach(brick => {
+    state.player1.bricks.forEach(brick => {
       if (!this.bricks.has(brick.id)) {
         if (brick.brickType === BrickType.Normal) {
           this.bricks.set(brick.id, this.add.sprite(
@@ -289,18 +266,33 @@ export class GameScene extends Scene {
             brick.position.y + 4,
             "brick"
           ));
-        } else {
+        }
+      } else {
+        const brickSprite = this.bricks.get(brick.id);
+        brickSprite?.setX(brick.position.x + 16);
+        brickSprite?.setY(brick.position.y + 4);
+      }
+    });
+
+    state.player2.bricks.forEach(brick => {
+      if (!this.bricks.has(brick.id)) {
+        if (brick.brickType === BrickType.Normal) {
           this.bricks.set(brick.id, this.add.sprite(
             brick.position.x + 16,
             brick.position.y + 4,
-            "special_brick"
+            "brick"
           ));
         }
+      } else {
+        const brickSprite = this.bricks.get(brick.id);
+        brickSprite?.setX(brick.position.x + 16);
+        brickSprite?.setY(brick.position.y + 4);
       }
     });
 
     this.bricks.forEach((brick, id) => {
-      if (!state.bricks.some(otherbrick => otherbrick.id === id)) {
+      if (!state.player1.bricks.some(otherbrick => otherbrick.id === id)
+        && !state.player2.bricks.some(otherbrick => otherbrick.id === id)) {
         brick.destroy();
         this.bricks.delete(id);
       }
@@ -310,22 +302,13 @@ export class GameScene extends Scene {
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
   return {
-    player1: lerpPlayer(from.player1, to.player1, pctElapsed),
-    player2: lerpPlayer(from.player2, to.player2, pctElapsed),
-    bricks: from.bricks,
+    player1: from.player1,
+    player2: from.player2,
+
     balls: to.balls
   };
 }
 
-function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
-  return {
-    id: to.id,
-    score: from.score,
-    position: {
-      x: from.position.x + (to.position.x - from.position.x) * pctElapsed,
-      y: from.position.y + (to.position.y - from.position.y) * pctElapsed,
-    },
-  };
-}
+
 
 
