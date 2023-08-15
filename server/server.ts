@@ -285,15 +285,10 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           });
         }
 
+        const oldBrickId = game.player1.bricks[brickIdx].id;
+
         game.physics.remove(b);
         game.player1.bricks.splice(brickIdx, 1);
-
-        // add brick to player2!
-
-        const newBrickId = Math.max(
-          game.player1.bricks.map((brick => brick.id))
-            .concat(game.player2.bricks.map((brick => brick.id)))
-            .reduce((a, b) => Math.max(a, b), -1)) + 1;
 
         const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
           { oType: BodyType.Brick2 });
@@ -312,10 +307,9 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         }
 
         game.player2.bricks.push({
-          id: newBrickId,
+          id: oldBrickId,
           brickType: BrickType.Normal,
-          body: Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
-            { oType: BodyType.Brick2 })
+          body: newBody
         });
       }
     }
@@ -348,15 +342,10 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           });
         }
 
+        const oldBrickId = game.player2.bricks[brickIdx].id;
+
         game.physics.remove(b);
         game.player2.bricks.splice(brickIdx, 1);
-
-        // add brick to player1!
-
-        const newBrickId = Math.max(
-          game.player1.bricks.map((brick => brick.id))
-            .concat(game.player2.bricks.map((brick => brick.id)))
-            .reduce((a, b) => Math.max(a, b), -1)) + 1;
 
         const newBody = Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
           { oType: BodyType.Brick1 });
@@ -375,7 +364,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         }
 
         game.player1.bricks.push({
-          id: newBrickId,
+          id: oldBrickId,
           brickType: BrickType.Normal,
           body: newBody
         });

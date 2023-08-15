@@ -95,6 +95,12 @@ export class GameScene extends Scene {
   }
 
   create() {
+
+    this.cameras.main.setBackgroundColor("#172038");
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0x819796);
+    graphics.fillRect(-128, -220, 256, 440)
+
     this.bindPreloaderDOM();
 
     this.setPreloaderPercentage(0.1);
@@ -299,11 +305,36 @@ export class GameScene extends Scene {
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
   return {
-    player1: from.player1,
-    player2: from.player2,
+    player1: lerpPlayer(from.player1, to.player1, pctElapsed),
+    player2: lerpPlayer(from.player2, to.player2, pctElapsed),
 
     balls: to.balls
   };
+}
+
+function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
+  const bricks: Brick[] = from.bricks.map(fromBrick => {
+
+    const toBrick = to.bricks.find(otherBrick => otherBrick.id == fromBrick.id);
+
+    if (toBrick) {
+      return {
+        id: fromBrick.id,
+        brickType: fromBrick.brickType,
+        position: {
+          x: (1 - pctElapsed) * fromBrick.position.x + pctElapsed * toBrick.position.x,
+          y: (1 - pctElapsed) * fromBrick.position.y + pctElapsed * toBrick.position.y,
+        }
+      }
+    }
+    return fromBrick;
+  });
+
+  return {
+    id: from.id,
+    score: from.score,
+    bricks,
+  }
 }
 
 
