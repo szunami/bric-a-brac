@@ -212,14 +212,37 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     return;
   }
 
-  // todo: clamp this somehow
-  game.player1.bricks.forEach((brick) => {
-    brick.body.x += PLAYER_SPEED * game.player1.direction.x * deltaMs;
-  });
+  {
+    var dx = PLAYER_SPEED * game.player1.direction.x * deltaMs;
+    var max = Math.abs(dx);
+    var min = -1 * Math.abs(dx);
 
-  game.player2.bricks.forEach((brick) => {
-    brick.body.x += PLAYER_SPEED * game.player2.direction.x * deltaMs;
-  });
+    game.player1.bricks.forEach(brick => {
+      max = Math.min(max, 128 - 32 - brick.body.x);
+      min = Math.max(min, -128 - brick.body.x);
+    });
+
+    var clampedDx = Math.min(Math.max(min, dx), max);
+    game.player1.bricks.forEach(brick => {
+      brick.body.x += clampedDx;
+    })
+  }
+
+  {
+    var dx = PLAYER_SPEED * game.player2.direction.x * deltaMs;
+    var max = Math.abs(dx);
+    var min = -1 * Math.abs(dx);
+
+    game.player2.bricks.forEach(brick => {
+      max = Math.min(max, 128 - 32 - brick.body.x);
+      min = Math.max(min, -128 - brick.body.x);
+    });
+
+    var clampedDx = Math.min(Math.max(min, dx), max);
+    game.player2.bricks.forEach(brick => {
+      brick.body.x += clampedDx;
+    })
+  }
 
   // Handle collision detections between the various types of PhysicsBody's
   game.physics.checkAll(({ a, b, overlapV }: { a: PhysicsBody; b: PhysicsBody; overlapV: SAT.Vector }) => {
@@ -270,7 +293,23 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         const newBrickId = Math.max(
           game.player1.bricks.map((brick => brick.id))
             .concat(game.player2.bricks.map((brick => brick.id)))
-            .reduce((a, b) => Math.max(a, b), -1));
+            .reduce((a, b) => Math.max(a, b), -1)) + 1;
+
+        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
+          { oType: BodyType.Brick2 });
+
+        var someoverlap = false;
+        game.physics.checkOne(newBody, () => {
+          someoverlap = true;
+        });
+
+        while (someoverlap) {
+          newBody.y += 8;
+          someoverlap = false;
+          game.physics.checkOne(newBody, () => {
+            someoverlap = true;
+          });
+        }
 
         game.player2.bricks.push({
           id: newBrickId,
@@ -278,7 +317,6 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           body: Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
             { oType: BodyType.Brick2 })
         });
-
       }
     }
 
@@ -318,19 +356,33 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         const newBrickId = Math.max(
           game.player1.bricks.map((brick => brick.id))
             .concat(game.player2.bricks.map((brick => brick.id)))
-            .reduce((a, b) => Math.max(a, b), -1));
+            .reduce((a, b) => Math.max(a, b), -1)) + 1;
+
+        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
+          { oType: BodyType.Brick1 });
+
+        var someoverlap = false;
+        game.physics.checkOne(newBody, () => {
+          someoverlap = true;
+        });
+
+        while (someoverlap) {
+          newBody.y -= 8;
+          someoverlap = false;
+          game.physics.checkOne(newBody, () => {
+            someoverlap = true;
+          });
+        }
 
         game.player1.bricks.push({
           id: newBrickId,
           brickType: BrickType.Normal,
-          body: Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
-            { oType: BodyType.Brick1 })
+          body: newBody
         });
-
       }
     }
-
   });
+
 
   var ballIdx = 0;
 
@@ -463,7 +515,20 @@ function initializeRoom(): InternalState {
       brickType: BrickType.Normal,
       body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
         { oType: BodyType.Brick1 })
-    }],
+    },
+    {
+      id: 1,
+      brickType: BrickType.Normal,
+      body: Object.assign(physics.createBox({ x: -32, y: 200 }, 32, 8),
+        { oType: BodyType.Brick1 })
+    },
+    {
+      id: 2,
+      brickType: BrickType.Normal,
+      body: Object.assign(physics.createBox({ x: 32, y: 200 }, 32, 8),
+        { oType: BodyType.Brick1 })
+    }
+    ],
   };
 
   const player2: InternalPlayer = {
@@ -473,10 +538,22 @@ function initializeRoom(): InternalState {
 
     bricks: [
       {
-        id: 1,
+        id: 3,
         brickType: BrickType.Normal,
         body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
-          { oType: BodyType.Brick1 })
+          { oType: BodyType.Brick2 })
+      },
+      {
+        id: 4,
+        brickType: BrickType.Normal,
+        body: Object.assign(physics.createBox({ x: 32, y: -200 }, 32, 8),
+          { oType: BodyType.Brick2 })
+      },
+      {
+        id: 5,
+        brickType: BrickType.Normal,
+        body: Object.assign(physics.createBox({ x: -32, y: -200 }, 32, 8),
+          { oType: BodyType.Brick2 })
       }
 
     ],
@@ -493,15 +570,6 @@ function initializeRoom(): InternalState {
       momentum: {
         x: BALL_SPEED,
         y: -BALL_SPEED
-      }
-    },
-    {
-      id: 1,
-      body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
-        { oType: BodyType.Ball }),
-      momentum: {
-        x: -BALL_SPEED,
-        y: BALL_SPEED
       }
     },
     ],
