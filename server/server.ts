@@ -235,6 +235,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick1) {
+      const oldX = a.x;
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
@@ -263,6 +264,69 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
         game.physics.remove(b);
         game.player1.bricks.splice(brickIdx, 1);
+
+        // add brick to player2!
+
+        const newBrickId = Math.max(
+          game.player1.bricks.map((brick => brick.id))
+            .concat(game.player2.bricks.map((brick => brick.id)))
+            .reduce((a, b) => Math.max(a, b), -1));
+
+        game.player2.bricks.push({
+          id: newBrickId,
+          brickType: BrickType.Normal,
+          body: Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
+            { oType: BodyType.Brick2 })
+        });
+
+      }
+    }
+
+    else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick2) {
+      const oldX = a.x;
+      const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
+      if (ballIdx >= 0) {
+        game.balls[ballIdx].momentum = {
+          x: game.balls[ballIdx].momentum.x,
+          y: -1 * game.balls[ballIdx].momentum.y
+        };
+        a.setPosition(a.x - overlapV.x, a.y - overlapV.y);
+      }
+
+      const brickIdx = game.player2.bricks.findIndex((brick) => brick.body === b);
+      if (brickIdx >= 0) {
+
+        if (game.player2.bricks[brickIdx].brickType === BrickType.Ball) {
+          const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
+          const newMomentum = {
+            x: -1 * game.balls[ballIdx].momentum.x,
+            y: -1 * game.balls[ballIdx].momentum.y
+          };
+          game.balls.push({
+            id: newBallId,
+            momentum: newMomentum,
+            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 8),
+              { oType: BodyType.Ball })
+          });
+        }
+
+        game.physics.remove(b);
+        game.player2.bricks.splice(brickIdx, 1);
+
+        // add brick to player1!
+
+        const newBrickId = Math.max(
+          game.player1.bricks.map((brick => brick.id))
+            .concat(game.player2.bricks.map((brick => brick.id)))
+            .reduce((a, b) => Math.max(a, b), -1));
+
+        game.player1.bricks.push({
+          id: newBrickId,
+          brickType: BrickType.Normal,
+          body: Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
+            { oType: BodyType.Brick1 })
+        });
+
       }
     }
 

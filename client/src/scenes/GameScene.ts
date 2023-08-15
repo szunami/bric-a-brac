@@ -211,15 +211,12 @@ export class GameScene extends Scene {
   }
 
   update() {
-
-
     // If the stateBuffer hasn't been defined, skip this update tick
     if (this.stateBuffer === undefined) {
       return;
     }
 
     const { state } = this.stateBuffer.getInterpolatedState(Date.now());
-
 
     if (this.player1Score === undefined) {
       this.player1Score = this.add
