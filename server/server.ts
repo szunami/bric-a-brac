@@ -214,7 +214,6 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
   }
 
   {
-
     const SLOWDOWN = game.player1.bricks.length === 0 ? 1 : 1 / game.player1.bricks.length;
     var dx = PLAYER_SPEED * game.player1.direction.x * deltaMs * SLOWDOWN;
     var max = Math.abs(dx);
@@ -228,7 +227,19 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var clampedDx = Math.min(Math.max(min, dx), max);
     game.player1.bricks.forEach(brick => {
       brick.body.x += clampedDx;
-    })
+    });
+
+    var dy = PLAYER_SPEED * game.player1.direction.y * deltaMs * SLOWDOWN;
+    var max = Math.abs(dy);
+    var min = -1 * Math.abs(dy);
+    game.player1.bricks.forEach(brick => {
+      max = Math.min(max, 220 - brick.body.y);
+      min = Math.max(min, 0 - brick.body.y);
+    });
+    var clampedDy = Math.min(Math.max(min, dy), max);
+    game.player1.bricks.forEach(brick => {
+      brick.body.y += clampedDy;
+    });
   }
 
   {
@@ -393,12 +404,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
   });
 
-
-  var ballIdx = 0;
-
-  while (ballIdx < game.balls.length) {
-    const ball = game.balls[ballIdx];
-
+  game.balls.forEach((ball) => {
     if (ball.body.x > 128) {
       ball.body.x = 128;
       ball.momentum.x *= -1;
@@ -407,67 +413,18 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       ball.body.x = -128;
       ball.momentum.x *= -1;
     }
+    if (ball.body.y > 220) {
+      ball.body.y = 220;
+      ball.momentum.y *= -1;
+    }
+    if (ball.body.y < -220) {
+      ball.body.y = -220;
+      ball.momentum.y *= -1;
+    }
 
     ball.body.x = ball.body.x + ball.momentum.x * deltaMs;
     ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
-
-    if (ball.body.y > 220) {
-      game.player1.score++;
-
-      game.physics.remove(ball.body);
-      game.balls.splice(ballIdx, 1);
-
-      if (game.balls.length < 2) {
-        const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
-        const newBall = {
-          id: newBallId,
-          momentum: {
-            x: BALL_SPEED,
-            y: -BALL_SPEED
-          },
-          body: Object.assign(game.physics.createCircle({ x: 0, y: 100 }, 8),
-            { oType: BodyType.Ball }
-          ),
-        };
-        game.balls.push(newBall);
-        continue;
-      }
-    }
-
-    if (ball.body.y < -220) {
-      game.player2.score++;
-
-      game.physics.remove(ball.body);
-      game.balls.splice(ballIdx, 1);
-
-      if (game.balls.length < 2) {
-
-        const newBallId = game.balls.length > 0 ? game.balls[game.balls.length - 1].id + 1 : 1;
-
-        const newBall = {
-          id: newBallId,
-          momentum: {
-            x: -BALL_SPEED,
-            y: BALL_SPEED
-          },
-          body: Object.assign(game.physics.createCircle({ x: 0, y: -100 }, 8),
-            { oType: BodyType.Ball }
-          ),
-        };
-
-        game.balls.push(newBall);
-        continue;
-      }
-
-    }
-    ballIdx++;
-  }
-
-  game.balls.forEach((ball, ballIdx) => {
-
-
   });
-
 }
 
 function broadcastStateUpdate(roomId: RoomId) {
@@ -537,7 +494,7 @@ function initializeRoom(): InternalState {
   const player1: InternalPlayer = {
     id: "",
     score: 0,
-    direction: { x: 0 },
+    direction: { x: 0, y: 0 },
 
     bricks: [{
       id: 0,
@@ -566,7 +523,7 @@ function initializeRoom(): InternalState {
   const player2: InternalPlayer = {
     id: "",
     score: 0,
-    direction: { x: 0 },
+    direction: { x: 0, y: 0 },
 
     bricks: [
       {
