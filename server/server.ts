@@ -573,6 +573,15 @@ function initializeRoom(): InternalState {
         y: -BALL_SPEED
       }
     },
+    {
+      id: 1,
+      body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
+        { oType: BodyType.Ball }),
+      momentum: {
+        x: -BALL_SPEED,
+        y: BALL_SPEED
+      }
+    },
     ],
 
   };
