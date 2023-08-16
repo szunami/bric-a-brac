@@ -8,6 +8,7 @@ import map from "../../../common/map.json";
 
 const BULLETS_MAX = 3;
 
+
 export class GameScene extends Scene {
   private preloaderContainer!: HTMLDivElement;
   private preloaderBar!: HTMLDivElement;
@@ -216,6 +217,9 @@ export class GameScene extends Scene {
     this.cameras.main.setBounds(-400, -300, 800, 600);
   }
 
+
+
+
   update() {
     // If the stateBuffer hasn't been defined, skip this update tick
     if (this.stateBuffer === undefined) {
@@ -265,15 +269,15 @@ export class GameScene extends Scene {
       if (!this.bricks.has(brick.id)) {
         if (brick.brickType === BrickType.Normal) {
           this.bricks.set(brick.id, this.add.sprite(
-            brick.position.x + 16,
-            brick.position.y + 4,
+            brick.position.x + 16 * brick.scale.x,
+            brick.position.y + 4 * brick.scale.y,
             "brick"
-          ));
+          ).setScale(brick.scale.x, brick.scale.y).setTint(brick.color));
         }
       } else {
         const brickSprite = this.bricks.get(brick.id);
-        brickSprite?.setX(brick.position.x + 16);
-        brickSprite?.setY(brick.position.y + 4);
+        brickSprite?.setX(brick.position.x + 16 * brick.scale.x);
+        brickSprite?.setY(brick.position.y + 4 * brick.scale.y);
       }
     });
 
@@ -281,15 +285,15 @@ export class GameScene extends Scene {
       if (!this.bricks.has(brick.id)) {
         if (brick.brickType === BrickType.Normal) {
           this.bricks.set(brick.id, this.add.sprite(
-            brick.position.x + 16,
-            brick.position.y + 4,
+            brick.position.x + 16 * brick.scale.x,
+            brick.position.y + 4 * brick.scale.y,
             "brick"
-          ));
+          ).setScale(brick.scale.x, brick.scale.y).setTint(brick.color));
         }
       } else {
         const brickSprite = this.bricks.get(brick.id);
-        brickSprite?.setX(brick.position.x + 16);
-        brickSprite?.setY(brick.position.y + 4);
+        brickSprite?.setX(brick.position.x + 16 * brick.scale.x);
+        brickSprite?.setY(brick.position.y + 4 * brick.scale.y);
       }
     });
 
@@ -324,7 +328,9 @@ function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
         position: {
           x: (1 - pctElapsed) * fromBrick.position.x + pctElapsed * toBrick.position.x,
           y: (1 - pctElapsed) * fromBrick.position.y + pctElapsed * toBrick.position.y,
-        }
+        },
+        scale: fromBrick.scale,
+        color: fromBrick.color,
       }
     }
     return fromBrick;

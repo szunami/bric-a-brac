@@ -75,6 +75,7 @@ type InternalBrick = {
   id: number;
   body: PhysicsBody;
   brickType: BrickType;
+  color: number;
 }
 
 // A type which represents the internal state of the server, containing:
@@ -213,7 +214,9 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
   }
 
   {
-    var dx = PLAYER_SPEED * game.player1.direction.x * deltaMs;
+
+    const SLOWDOWN = game.player1.bricks.length === 0 ? 1 : 1 / game.player1.bricks.length;
+    var dx = PLAYER_SPEED * game.player1.direction.x * deltaMs * SLOWDOWN;
     var max = Math.abs(dx);
     var min = -1 * Math.abs(dx);
 
@@ -229,7 +232,9 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
   }
 
   {
-    var dx = PLAYER_SPEED * game.player2.direction.x * deltaMs;
+    const SLOWDOWN = game.player2.bricks.length === 0 ? 1 : 1 / game.player1.bricks.length;
+
+    var dx = PLAYER_SPEED * game.player2.direction.x * deltaMs * SLOWDOWN;
     var max = Math.abs(dx);
     var min = -1 * Math.abs(dx);
 
@@ -287,11 +292,18 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
         const oldBrickId = game.player1.bricks[brickIdx].id;
 
+        const oldScaleX = b.scaleX;
+        const oldScaleY = b.scaleY;
+
+        const oldColor = game.player1.bricks[brickIdx].color;
+
         game.physics.remove(b);
         game.player1.bricks.splice(brickIdx, 1);
 
         const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
           { oType: BodyType.Brick2 });
+
+        newBody.setScale(oldScaleX, oldScaleY);
 
         var someoverlap = false;
         game.physics.checkOne(newBody, () => {
@@ -309,7 +321,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         game.player2.bricks.push({
           id: oldBrickId,
           brickType: BrickType.Normal,
-          body: newBody
+          body: newBody,
+          color: oldColor,
         });
       }
     }
@@ -343,12 +356,19 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         }
 
         const oldBrickId = game.player2.bricks[brickIdx].id;
+        const oldColor = game.player2.bricks[brickIdx].color;
+
+        const oldScaleX = b.scaleX;
+        const oldScaleY = b.scaleY;
 
         game.physics.remove(b);
         game.player2.bricks.splice(brickIdx, 1);
 
         const newBody = Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
           { oType: BodyType.Brick1 });
+
+        newBody.setScale(oldScaleX, oldScaleY);
+
 
         var someoverlap = false;
         game.physics.checkOne(newBody, () => {
@@ -366,7 +386,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         game.player1.bricks.push({
           id: oldBrickId,
           brickType: BrickType.Normal,
-          body: newBody
+          body: newBody,
+          color: oldColor,
         });
       }
     }
@@ -461,7 +482,9 @@ function broadcastStateUpdate(roomId: RoomId) {
         return {
           id: brick.id,
           position: { x: brick.body.x, y: brick.body.y },
-          brickType: brick.brickType
+          brickType: brick.brickType,
+          scale: { x: brick.body.scaleX, y: brick.body.scaleY },
+          color: brick.color,
         };
       }),
     },
@@ -472,7 +495,9 @@ function broadcastStateUpdate(roomId: RoomId) {
         return {
           id: brick.id,
           position: { x: brick.body.x, y: brick.body.y },
-          brickType: brick.brickType
+          brickType: brick.brickType,
+          scale: { x: brick.body.scaleX, y: brick.body.scaleY },
+          color: brick.color,
         };
       }),
     },
@@ -490,6 +515,21 @@ function broadcastStateUpdate(roomId: RoomId) {
   server.broadcastMessage(roomId, Buffer.from(JSON.stringify(msg), "utf8"));
 }
 
+function makeBox(physics: System,
+  x: number, y: number, scaleX: number, scaleY: number, oType: BodyType): PhysicsBody {
+  const box = Object.assign(physics.createBox({ x, y }, 32, 8), {
+    oType
+  });
+  box.setScale(scaleX, scaleY);
+  return box;
+}
+
+const BRICK_TINTS = [0x602c2c, 0x884b2b, 0xbe772b, 0xde9e41];
+
+function randomTint(): number {
+  return BRICK_TINTS[Math.floor(Math.random() * BRICK_TINTS.length)];
+}
+
 function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
@@ -502,20 +542,23 @@ function initializeRoom(): InternalState {
     bricks: [{
       id: 0,
       brickType: BrickType.Normal,
-      body: Object.assign(physics.createBox({ x: 0, y: 200 }, 32, 8),
-        { oType: BodyType.Brick1 })
+      body: makeBox(physics, 0, 200, 1, 4, BodyType.Brick1),
+      color: randomTint(),
     },
     {
       id: 1,
       brickType: BrickType.Normal,
       body: Object.assign(physics.createBox({ x: -32, y: 200 }, 32, 8),
-        { oType: BodyType.Brick1 })
+        { oType: BodyType.Brick1 }),
+      color: randomTint(),
     },
     {
       id: 2,
       brickType: BrickType.Normal,
       body: Object.assign(physics.createBox({ x: 32, y: 200 }, 32, 8),
-        { oType: BodyType.Brick1 })
+        { oType: BodyType.Brick1 }),
+      color: randomTint(),
+
     }
     ],
   };
@@ -529,22 +572,22 @@ function initializeRoom(): InternalState {
       {
         id: 3,
         brickType: BrickType.Normal,
-        body: Object.assign(physics.createBox({ x: 0, y: -200 }, 32, 8),
-          { oType: BodyType.Brick2 })
+        body: makeBox(physics, 0, -200, 1, 4, BodyType.Brick2),
+        color: randomTint(),
       },
       {
         id: 4,
         brickType: BrickType.Normal,
-        body: Object.assign(physics.createBox({ x: 32, y: -200 }, 32, 8),
-          { oType: BodyType.Brick2 })
+        body: makeBox(physics, 16, -200, 0.5, 1, BodyType.Brick2),
+        color: randomTint(),
       },
       {
         id: 5,
         brickType: BrickType.Normal,
         body: Object.assign(physics.createBox({ x: -32, y: -200 }, 32, 8),
-          { oType: BodyType.Brick2 })
+          { oType: BodyType.Brick2 }),
+        color: randomTint(),
       }
-
     ],
   };
 

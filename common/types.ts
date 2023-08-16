@@ -9,7 +9,7 @@ export type Momentum = {
   y: number;
 }
 
-export type Position = {
+export type XY = {
   x: number;
   y: number;
 };
@@ -29,13 +29,15 @@ export enum BrickType {
 
 export type Brick = {
   id: number;
-  position: Position;
+  position: XY;
+  scale: XY;
   brickType: BrickType;
+  color: number;
 }
 
 export type Ball = {
   id: number;
-  position: Position;
+  position: XY;
 }
 
 export type GameState = {
