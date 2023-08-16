@@ -232,7 +232,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
   }
 
   {
-    const SLOWDOWN = game.player2.bricks.length === 0 ? 1 : 1 / game.player1.bricks.length;
+    const SLOWDOWN = game.player2.bricks.length === 0 ? 1 : 1 / game.player2.bricks.length;
 
     var dx = PLAYER_SPEED * game.player2.direction.x * deltaMs * SLOWDOWN;
     var max = Math.abs(dx);
