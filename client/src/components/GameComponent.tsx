@@ -38,7 +38,6 @@ export function GameComponent(props: GameComponentProps) {
   return (
     <div id="game-content" className="relative">
       <div className="preloader off">
-        <img src="lobby_header.png" alt="Hathora" />
         <div className="preloader__bar">
           <div className="preloader__bar-inner"></div>
         </div>
