@@ -100,7 +100,7 @@ function App() {
   }
   return (
     <>
-      <div className="py-5 overflow-hidden" style={{ backgroundColor: "#0E0E1B" }}>
+      <div className="py-5 overflow-hidden" style={{ backgroundColor: "#10141f" }}>
         <div className="md:w-fit mx-auto px-2 md:px-0">
           <div className={"md:mt-4 relative"} style={{ width: GameConfig.width, height: GameConfig.height }}>
             {failedToConnect ? (
@@ -117,13 +117,13 @@ function App() {
               <>
                 <div
                   className={
-                    "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl text-neutralgray-550 -left-[220px] top-[272px]"
+                    "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl -left-[220px] top-[272px]"
                   }
                 >
                 </div>
                 <div
                   className={
-                    "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl text-neutralgray-550 -left-[290px] top-[658px]"
+                    "hidden lg:flex items-center gap-2 absolute font-hathora font-bold text-3xl -left-[290px] top-[658px]"
                   }
                 >
                 </div>
