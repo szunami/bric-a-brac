@@ -233,7 +233,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var min = -1 * Math.abs(dy);
     game.player1.bricks.forEach(brick => {
       max = Math.min(max, 220 - brick.body.maxY);
-      min = Math.max(min, 0 - brick.body.maxY);
+      min = Math.max(min, 0 - brick.body.minY);
     });
     var clampedDy = Math.min(Math.max(min, dy), max);
     game.player1.bricks.forEach(brick => {
@@ -262,7 +262,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var max = Math.abs(dy);
     var min = -1 * Math.abs(dy);
     game.player2.bricks.forEach(brick => {
-      max = Math.min(max, 0 - brick.body.y);
+      max = Math.min(max, 0 - brick.body.maxY);
       min = Math.max(min, -220 - brick.body.y);
     });
     var clampedDy = Math.min(Math.max(min, dy), max);
@@ -286,6 +286,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick1) {
       const oldX = b.x;
+      const oldY = b.y;
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
@@ -322,23 +323,10 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         game.physics.remove(b);
         game.player1.bricks.splice(brickIdx, 1);
 
-        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -200 }, 32, 8),
+        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -oldY }, 32, 8),
           { oType: BodyType.Brick2 });
 
         newBody.setScale(oldScaleX, oldScaleY);
-
-        var someoverlap = false;
-        game.physics.checkOne(newBody, () => {
-          someoverlap = true;
-        });
-
-        while (someoverlap) {
-          newBody.y += 8;
-          someoverlap = false;
-          game.physics.checkOne(newBody, () => {
-            someoverlap = true;
-          });
-        }
 
         game.player2.bricks.push({
           id: oldBrickId,
@@ -351,6 +339,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick2) {
       const oldX = b.x;
+      const oldY = b.y;
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
@@ -386,24 +375,11 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         game.physics.remove(b);
         game.player2.bricks.splice(brickIdx, 1);
 
-        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: 200 }, 32, 8),
+        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -oldY }, 32, 8),
           { oType: BodyType.Brick1 });
 
         newBody.setScale(oldScaleX, oldScaleY);
 
-
-        var someoverlap = false;
-        game.physics.checkOne(newBody, () => {
-          someoverlap = true;
-        });
-
-        while (someoverlap) {
-          newBody.y -= 8;
-          someoverlap = false;
-          game.physics.checkOne(newBody, () => {
-            someoverlap = true;
-          });
-        }
 
         game.player1.bricks.push({
           id: oldBrickId,
@@ -569,15 +545,15 @@ function initializeRoom(): InternalState {
         y: -BALL_SPEED
       }
     },
-    {
-      id: 1,
-      body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
-        { oType: BodyType.Ball }),
-      momentum: {
-        x: -BALL_SPEED,
-        y: BALL_SPEED
-      }
-    },
+      // {
+      //   id: 1,
+      //   body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
+      //     { oType: BodyType.Ball }),
+      //   momentum: {
+      //     x: -BALL_SPEED,
+      //     y: BALL_SPEED
+      //   }
+      // },
     ],
 
   };
