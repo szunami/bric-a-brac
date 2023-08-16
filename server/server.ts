@@ -223,7 +223,6 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       max = Math.min(max, 128 - 32 - brick.body.x);
       min = Math.max(min, -128 - brick.body.x);
     });
-
     var clampedDx = Math.min(Math.max(min, dx), max);
     game.player1.bricks.forEach(brick => {
       brick.body.x += clampedDx;
@@ -233,8 +232,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var max = Math.abs(dy);
     var min = -1 * Math.abs(dy);
     game.player1.bricks.forEach(brick => {
-      max = Math.min(max, 220 - brick.body.y);
-      min = Math.max(min, 0 - brick.body.y);
+      max = Math.min(max, 220 - brick.body.maxY);
+      min = Math.max(min, 0 - brick.body.maxY);
     });
     var clampedDy = Math.min(Math.max(min, dy), max);
     game.player1.bricks.forEach(brick => {
@@ -417,20 +416,20 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
   });
 
   game.balls.forEach((ball) => {
-    if (ball.body.x > 128) {
-      ball.body.x = 128;
+    if (ball.body.maxX > 128) {
+      ball.body.x = 124;
       ball.momentum.x *= -1;
     }
-    if (ball.body.x < -128) {
-      ball.body.x = -128;
+    if (ball.body.minX < -128) {
+      ball.body.x = -124;
       ball.momentum.x *= -1;
     }
-    if (ball.body.y > 220) {
-      ball.body.y = 220;
+    if (ball.body.maxY > 220) {
+      ball.body.y = 216;
       ball.momentum.y *= -1;
     }
-    if (ball.body.y < -220) {
-      ball.body.y = -220;
+    if (ball.body.minY < -220) {
+      ball.body.y = -216;
       ball.momentum.y *= -1;
     }
 
@@ -511,21 +510,19 @@ function initializeRoom(): InternalState {
     bricks: [{
       id: 0,
       brickType: BrickType.Normal,
-      body: makeBox(physics, 0, 200, 1, 4, BodyType.Brick1),
+      body: makeBox(physics, 0, 180, 1, 4, BodyType.Brick1),
       color: randomTint(),
     },
     {
       id: 1,
       brickType: BrickType.Normal,
-      body: Object.assign(physics.createBox({ x: -32, y: 200 }, 32, 8),
-        { oType: BodyType.Brick1 }),
+      body: makeBox(physics, -64, 180, 1, 1, BodyType.Brick1),
       color: randomTint(),
     },
     {
       id: 2,
       brickType: BrickType.Normal,
-      body: Object.assign(physics.createBox({ x: 32, y: 200 }, 32, 8),
-        { oType: BodyType.Brick1 }),
+      body: makeBox(physics, 64, 180, 0.5, 1, BodyType.Brick1),
       color: randomTint(),
 
     }
@@ -541,20 +538,19 @@ function initializeRoom(): InternalState {
       {
         id: 3,
         brickType: BrickType.Normal,
-        body: makeBox(physics, 0, -200, 1, 4, BodyType.Brick2),
+        body: makeBox(physics, 0, -180, 1, 4, BodyType.Brick2),
         color: randomTint(),
       },
       {
         id: 4,
         brickType: BrickType.Normal,
-        body: makeBox(physics, 16, -200, 0.5, 1, BodyType.Brick2),
+        body: makeBox(physics, 64, -180, 1, 1, BodyType.Brick2),
         color: randomTint(),
       },
       {
         id: 5,
         brickType: BrickType.Normal,
-        body: Object.assign(physics.createBox({ x: -32, y: -200 }, 32, 8),
-          { oType: BodyType.Brick2 }),
+        body: makeBox(physics, -64, -180, 0.5, 1, BodyType.Brick2),
         color: randomTint(),
       }
     ],
