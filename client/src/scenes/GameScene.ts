@@ -100,7 +100,10 @@ export class GameScene extends Scene {
     this.cameras.main.setBackgroundColor("#172038");
     const graphics = this.add.graphics();
     graphics.fillStyle(0x819796);
-    graphics.fillRect(-128, -220, 256, 440)
+    graphics.fillRect(-128, -220, 256, 220)
+
+    graphics.fillStyle(0xa8b5b2);
+    graphics.fillRect(-128, 0, 256, 220)
 
     this.bindPreloaderDOM();
 
@@ -247,7 +250,7 @@ export class GameScene extends Scene {
       }
     });
 
-    const lambda = 0.1;
+    const lambda = 0.25;
 
     state.player1.bricks.forEach(brick => {
       if (!this.bricks.has(brick.id)) {
@@ -276,8 +279,8 @@ export class GameScene extends Scene {
         }
       } else {
         const brickSprite = this.bricks.get(brick.id);
-        brickSprite?.setX(brick.position.x + 16 * brick.scale.x);
-        brickSprite?.setY(brick.position.y + 4 * brick.scale.y);
+        brickSprite?.setX(lambda * (brick.position.x + 16 * brick.scale.x) + (1 - lambda) * brickSprite.x);
+        brickSprite?.setY(lambda * (brick.position.y + 4 * brick.scale.y) + (1 - lambda) * brickSprite.y);
       }
     });
 

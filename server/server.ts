@@ -18,7 +18,7 @@ const TICK_INTERVAL_MS = 50;
 
 // Player configuration
 const PLAYER_RADIUS = 20; // The player's circular radius, used for collision detection
-const PLAYER_SPEED = 200; // The player's movement speed
+const PLAYER_SPEED = 800; // The player's movement speed
 const DASH_DISTANCE = 40; // The player's dash distance
 
 const BALL_SPEED = 100;
@@ -220,7 +220,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var min = -1 * Math.abs(dx);
 
     game.player1.bricks.forEach(brick => {
-      max = Math.min(max, 128 - 32 - brick.body.x);
+      max = Math.min(max, 128 - brick.body.maxX);
       min = Math.max(min, -128 - brick.body.x);
     });
     var clampedDx = Math.min(Math.max(min, dx), max);
@@ -249,7 +249,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var min = -1 * Math.abs(dx);
 
     game.player2.bricks.forEach(brick => {
-      max = Math.min(max, 128 - 32 - brick.body.x);
+      max = Math.min(max, 128 - brick.body.maxX);
       min = Math.max(min, -128 - brick.body.x);
     });
 
@@ -478,58 +478,49 @@ function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
 
+  const player1Bricks = [];
+  for (var i = 0; i < 5; i++) {
+    player1Bricks.push({
+      id: i,
+      brickType: BrickType.Normal,
+      body: makeBox(physics,
+        (Math.random() - 0.5) * 100,
+        (100 + Math.random() * 100),
+        (0.5 + Math.random()),
+        (0.5 + Math.random()) * 2,
+        BodyType.Brick1),
+      color: randomTint(),
+    });
+  }
+
   const player1: InternalPlayer = {
     id: "",
     score: 0,
     direction: { x: 0, y: 0 },
 
-    bricks: [{
-      id: 0,
-      brickType: BrickType.Normal,
-      body: makeBox(physics, 0, 180, 1, 4, BodyType.Brick1),
-      color: randomTint(),
-    },
-    {
-      id: 1,
-      brickType: BrickType.Normal,
-      body: makeBox(physics, -64, 180, 1, 1, BodyType.Brick1),
-      color: randomTint(),
-    },
-    {
-      id: 2,
-      brickType: BrickType.Normal,
-      body: makeBox(physics, 64, 180, 0.5, 1, BodyType.Brick1),
-      color: randomTint(),
-
-    }
-    ],
+    bricks: player1Bricks,
   };
+
+  const player2Bricks = [];
+  for (var i = 0; i < 5; i++) {
+    player2Bricks.push({
+      id: 5 + i,
+      brickType: BrickType.Normal,
+      body: makeBox(physics,
+        (Math.random() - 0.5) * 100,
+        -1 * (100 + Math.random() * 100),
+        (0.5 + Math.random()),
+        (0.5 + Math.random()) * 2,
+        BodyType.Brick2),
+      color: randomTint(),
+    });
+  }
 
   const player2: InternalPlayer = {
     id: "",
     score: 0,
     direction: { x: 0, y: 0 },
-
-    bricks: [
-      {
-        id: 3,
-        brickType: BrickType.Normal,
-        body: makeBox(physics, 0, -180, 1, 4, BodyType.Brick2),
-        color: randomTint(),
-      },
-      {
-        id: 4,
-        brickType: BrickType.Normal,
-        body: makeBox(physics, 64, -180, 1, 1, BodyType.Brick2),
-        color: randomTint(),
-      },
-      {
-        id: 5,
-        brickType: BrickType.Normal,
-        body: makeBox(physics, -64, -180, 0.5, 1, BodyType.Brick2),
-        color: randomTint(),
-      }
-    ],
+    bricks: player2Bricks,
   };
 
   return {
@@ -538,22 +529,14 @@ function initializeRoom(): InternalState {
     player2,
     balls: [{
       id: 0,
-      body: Object.assign(physics.createCircle({ x: 0, y: 100 }, 8),
+      body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
         { oType: BodyType.Ball }),
       momentum: {
         x: BALL_SPEED,
         y: -BALL_SPEED
       }
     },
-      // {
-      //   id: 1,
-      //   body: Object.assign(physics.createCircle({ x: 0, y: -100 }, 8),
-      //     { oType: BodyType.Ball }),
-      //   momentum: {
-      //     x: -BALL_SPEED,
-      //     y: BALL_SPEED
-      //   }
-      // },
+
     ],
 
   };
