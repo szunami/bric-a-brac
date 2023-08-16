@@ -263,7 +263,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick1) {
-      const oldX = a.x;
+      const oldX = b.x;
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
@@ -328,7 +328,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
 
     else if (a.oType === BodyType.Ball && b.oType === BodyType.Brick2) {
-      const oldX = a.x;
+      const oldX = b.x;
       const ballIdx: number = game.balls.findIndex((ball) => ball.body === a);
       if (ballIdx >= 0) {
         game.balls[ballIdx].momentum = {
