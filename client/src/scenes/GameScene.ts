@@ -228,24 +228,6 @@ export class GameScene extends Scene {
 
     const { state } = this.stateBuffer.getInterpolatedState(Date.now());
 
-    if (this.player1Score === undefined) {
-      this.player1Score = this.add
-        .text(500, 20, `P1 Score: ${state.player1.score}`, { color: "white" })
-        .setAlpha(0.8)
-        .setScrollFactor(0);
-    } else {
-      this.player1Score.setText(`P1 Score: ${state.player1.score}`)
-    }
-
-    if (this.player2Score === undefined) {
-      this.player2Score = this.add
-        .text(500, 580, `P2 Score: ${state.player2.score}`, { color: "white" })
-        .setAlpha(0.8)
-        .setScrollFactor(0);
-    } else {
-      this.player2Score.setText(`P2 Score: ${state.player2.score}`)
-    }
-
     state.balls.forEach(ball => {
       if (!this.balls.has(ball.id)) {
         this.balls.set(ball.id, this.add.sprite(
@@ -265,6 +247,8 @@ export class GameScene extends Scene {
       }
     });
 
+    const lambda = 0.1;
+
     state.player1.bricks.forEach(brick => {
       if (!this.bricks.has(brick.id)) {
         if (brick.brickType === BrickType.Normal) {
@@ -276,8 +260,8 @@ export class GameScene extends Scene {
         }
       } else {
         const brickSprite = this.bricks.get(brick.id);
-        brickSprite?.setX(brick.position.x + 16 * brick.scale.x);
-        brickSprite?.setY(brick.position.y + 4 * brick.scale.y);
+        brickSprite?.setX(lambda * (brick.position.x + 16 * brick.scale.x) + (1 - lambda) * brickSprite.x);
+        brickSprite?.setY(lambda * (brick.position.y + 4 * brick.scale.y) + (1 - lambda) * brickSprite.y);
       }
     });
 
@@ -319,7 +303,7 @@ function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
 function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
   const bricks: Brick[] = from.bricks.map(fromBrick => {
 
-    const toBrick = to.bricks.find(otherBrick => otherBrick.id == fromBrick.id);
+    const toBrick = to.bricks.find(otherBrick => otherBrick.id === fromBrick.id);
 
     if (toBrick) {
       return {
