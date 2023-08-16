@@ -257,7 +257,19 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var clampedDx = Math.min(Math.max(min, dx), max);
     game.player2.bricks.forEach(brick => {
       brick.body.x += clampedDx;
-    })
+    });
+
+    var dy = PLAYER_SPEED * game.player2.direction.y * deltaMs * SLOWDOWN;
+    var max = Math.abs(dy);
+    var min = -1 * Math.abs(dy);
+    game.player2.bricks.forEach(brick => {
+      max = Math.min(max, 0 - brick.body.y);
+      min = Math.max(min, -220 - brick.body.y);
+    });
+    var clampedDy = Math.min(Math.max(min, dy), max);
+    game.player2.bricks.forEach(brick => {
+      brick.body.y += clampedDy;
+    });
   }
 
   // Handle collision detections between the various types of PhysicsBody's

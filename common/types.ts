@@ -2,6 +2,7 @@ import { Region } from "@hathora/hathora-cloud-sdk";
 
 export type Direction = {
   x: number;
+  y: number;
 }
 
 export type Momentum = {
