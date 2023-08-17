@@ -237,7 +237,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var min = -1 * Math.abs(dy);
     game.player1.bricks.forEach(brick => {
       max = Math.min(max, 220 - brick.body.maxY);
-      min = Math.max(min, 0 - brick.body.minY);
+      min = Math.max(min, -220 - brick.body.minY);
     });
     var clampedDy = Math.min(Math.max(min, dy), max);
     game.player1.bricks.forEach(brick => {
@@ -266,7 +266,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     var max = Math.abs(dy);
     var min = -1 * Math.abs(dy);
     game.player2.bricks.forEach(brick => {
-      max = Math.min(max, 0 - brick.body.maxY);
+      max = Math.min(max, 220 - brick.body.maxY);
       min = Math.max(min, -220 - brick.body.y);
     });
     var clampedDy = Math.min(Math.max(min, dy), max);
@@ -355,6 +355,12 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
         game.player2.bricks.splice(brickIdx, 1);
 
       }
+    } else if (a.oType === BodyType.Brick1 && b.oType === BodyType.Brick2 ||
+      a.oType === BodyType.Brick1 && b.oType === BodyType.Brick1 ||
+      a.oType === BodyType.Brick2 && b.oType === BodyType.Brick2
+    ) {
+      a.setPosition(a.x - overlapV.x / 2, a.y - overlapV.y / 2);
+      b.setPosition(b.x + overlapV.x / 2, b.y + overlapV.y / 2);
     }
   });
 
@@ -449,19 +455,28 @@ function initializeRoom(): InternalState {
   const physics = new System();
   const tileSize = map.tileSize;
 
+  const row = 7;
+  const col = 3;
+
+  console.log("player 1 bricks:");
+
   const player1Bricks = [];
-  for (var i = 0; i < 5; i++) {
-    player1Bricks.push({
-      id: i,
-      brickType: BrickType.Normal,
-      body: makeBox(physics,
-        (Math.random() - 0.5) * 100,
-        (100 + Math.random() * 100),
-        (0.5 + Math.random()),
-        (0.5 + Math.random()) * 2,
-        BodyType.Brick1),
-      color: randomTint(),
-    });
+  for (var i = 0; i < row; i++) {
+    for (var j = 0; j < col; j++) {
+      const brick = {
+        id: i * col + j,
+        brickType: BrickType.Normal,
+        body: makeBox(physics,
+          -32 * row / 2 + 32 * i,
+          180 + 16 * j,
+          1,
+          4,
+          BodyType.Brick1),
+        color: 0x602c2c,
+      };
+      console.log(brick.id, brick.body.x, brick.body.y);
+      player1Bricks.push(brick);
+    }
   }
 
   const player1: InternalPlayer = {
@@ -473,19 +488,25 @@ function initializeRoom(): InternalState {
     bricks: player1Bricks,
   };
 
+  console.log("player 2 bricks");
+
   const player2Bricks = [];
-  for (var i = 0; i < 5; i++) {
-    player2Bricks.push({
-      id: 5 + i,
-      brickType: BrickType.Normal,
-      body: makeBox(physics,
-        (Math.random() - 0.5) * 100,
-        -1 * (100 + Math.random() * 100),
-        (0.5 + Math.random()),
-        (0.5 + Math.random()) * 2,
-        BodyType.Brick2),
-      color: randomTint(),
-    });
+  for (var i = 0; i < row; i++) {
+    for (var j = 0; j < col; j++) {
+      const brick = {
+        id: row * col + i * col + j,
+        brickType: BrickType.Normal,
+        body: makeBox(physics,
+          -32 * row / 2 + 32 * i,
+          -180 - 16 * j,
+          1,
+          4,
+          BodyType.Brick2),
+        color: 0xbe772b,
+      };
+      console.log(brick.id, brick.body.x, brick.body.y);
+      player2Bricks.push(brick);
+    }
   }
 
   const player2: InternalPlayer = {
