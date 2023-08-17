@@ -21,7 +21,7 @@ const PLAYER_RADIUS = 20; // The player's circular radius, used for collision de
 const PLAYER_SPEED = 800; // The player's movement speed
 const DASH_DISTANCE = 40; // The player's dash distance
 
-const BALL_SPEED = 100;
+const BALL_SPEED = 1000;
 
 // Bullet configuration
 const BULLET_RADIUS = 9; // The bullet's circular radius, used for collision detection
@@ -58,6 +58,7 @@ type PhysicsBody = Body & { oType: BodyType };
 // A type which defines the properties of a player used internally on the server (not sent to client)
 type InternalPlayer = {
   id: UserId;
+  ready: boolean;
   score: number;
   direction: Direction;
 
@@ -178,6 +179,9 @@ const store: Application = {
         id: message.id,
       };
       server.sendMessage(roomId, userId, Buffer.from(JSON.stringify(msg), "utf8"));
+    } else if (message.type === ClientMessageType.SetReady) {
+      console.log(`${player.id} is ready`);
+      player.ready = true;
     }
   },
 };
@@ -209,7 +213,7 @@ const GRAVITY = 1;
 // The frame-by-frame logic of your game should live in it's server's tick function. This is often a place to check for collisions, compute score, and so forth
 async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
-  if (game.player1.id === "" || game.player2.id === "") {
+  if (game.player1.id === "" || !game.player1.ready || game.player2.id === "" || !game.player2.ready) {
     return;
   }
 
@@ -313,27 +317,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           });
         }
 
-        const oldBrickId = game.player1.bricks[brickIdx].id;
-
-        const oldScaleX = b.scaleX;
-        const oldScaleY = b.scaleY;
-
-        const oldColor = game.player1.bricks[brickIdx].color;
-
         game.physics.remove(b);
         game.player1.bricks.splice(brickIdx, 1);
-
-        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -oldY }, 32, 8),
-          { oType: BodyType.Brick2 });
-
-        newBody.setScale(oldScaleX, oldScaleY);
-
-        game.player2.bricks.push({
-          id: oldBrickId,
-          brickType: BrickType.Normal,
-          body: newBody,
-          color: oldColor,
-        });
       }
     }
 
@@ -366,30 +351,14 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           });
         }
 
-        const oldBrickId = game.player2.bricks[brickIdx].id;
-        const oldColor = game.player2.bricks[brickIdx].color;
-
-        const oldScaleX = b.scaleX;
-        const oldScaleY = b.scaleY;
-
         game.physics.remove(b);
         game.player2.bricks.splice(brickIdx, 1);
 
-        const newBody = Object.assign(game.physics.createBox({ x: oldX, y: -oldY }, 32, 8),
-          { oType: BodyType.Brick1 });
-
-        newBody.setScale(oldScaleX, oldScaleY);
-
-
-        game.player1.bricks.push({
-          id: oldBrickId,
-          brickType: BrickType.Normal,
-          body: newBody,
-          color: oldColor,
-        });
       }
     }
   });
+
+  const ballSlowdown = 1 + game.player1.bricks.length + game.player2.bricks.length;
 
   game.balls.forEach((ball) => {
     if (ball.body.maxX > 128) {
@@ -409,8 +378,8 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       ball.momentum.y *= -1;
     }
 
-    ball.body.x = ball.body.x + ball.momentum.x * deltaMs;
-    ball.body.y = ball.body.y + ball.momentum.y * deltaMs;
+    ball.body.x = ball.body.x + ball.momentum.x * deltaMs / ballSlowdown;
+    ball.body.y = ball.body.y + ball.momentum.y * deltaMs / ballSlowdown;
   });
 }
 
@@ -421,6 +390,7 @@ function broadcastStateUpdate(roomId: RoomId) {
   const state: GameState = {
     player1: {
       id: game.player1.id,
+      ready: game.player1.ready,
       score: game.player1.score,
       bricks: game.player1.bricks.map((brick) => {
         return {
@@ -434,6 +404,7 @@ function broadcastStateUpdate(roomId: RoomId) {
     },
     player2: {
       id: game.player2.id,
+      ready: game.player2.ready,
       score: game.player2.score,
       bricks: game.player2.bricks.map((brick) => {
         return {
@@ -495,6 +466,7 @@ function initializeRoom(): InternalState {
 
   const player1: InternalPlayer = {
     id: "",
+    ready: false,
     score: 0,
     direction: { x: 0, y: 0 },
 
@@ -518,6 +490,7 @@ function initializeRoom(): InternalState {
 
   const player2: InternalPlayer = {
     id: "",
+    ready: false,
     score: 0,
     direction: { x: 0, y: 0 },
     bricks: player2Bricks,
