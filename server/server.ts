@@ -312,7 +312,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           game.balls.push({
             id: newBallId,
             momentum: newMomentum,
-            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 4),
+            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 8),
               { oType: BodyType.Ball })
           });
         }
@@ -346,7 +346,7 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
           game.balls.push({
             id: newBallId,
             momentum: newMomentum,
-            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 4),
+            body: Object.assign(game.physics.createCircle({ x: game.balls[ballIdx].body.x, y: game.balls[ballIdx].body.y }, 8),
               { oType: BodyType.Ball })
           });
         }
@@ -371,12 +371,31 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
       ball.momentum.x = BALL_SPEED;
     }
     if (ball.body.maxY > 220) {
-      ball.body.y = 212;
-      ball.momentum.y = -BALL_SPEED;
+      game.player1.score++;
+
+      game.player1.ready = false;
+      game.player2.ready = false;
+
+      game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
+      game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
+      game.player1.bricks = player1Bricks(game.physics);
+      game.player2.bricks = player2Bricks(game.physics);
+
+      game.balls.forEach((ball) => game.physics.remove(ball.body));
+      game.balls = initialBalls(game.physics);
     }
     if (ball.body.minY < -220) {
-      ball.body.y = -212;
-      ball.momentum.y = BALL_SPEED;
+      game.player2.score++;
+
+      game.player1.ready = false;
+      game.player2.ready = false;
+
+      game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
+      game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
+
+      game.player1.bricks = player1Bricks(game.physics);
+      game.player2.bricks = player2Bricks(game.physics);
+      game.balls = initialBalls(game.physics);
     }
 
     ball.body.x = ball.body.x + ball.momentum.x * deltaMs / ballSlowdown;
@@ -446,14 +465,11 @@ function randomTint(): number {
   return BRICK_TINTS[Math.floor(Math.random() * BRICK_TINTS.length)];
 }
 
-function initializeRoom(): InternalState {
-  const physics = new System();
-  const tileSize = map.tileSize;
+const row = 5;
+const col = 3;
 
-  const row = 5;
-  const col = 3;
-
-  const player1Bricks = [];
+function player1Bricks(physics: System): InternalBrick[] {
+  const result = [];
   for (var i = 0; i < row; i++) {
     for (var j = 0; j < col; j++) {
 
@@ -471,27 +487,18 @@ function initializeRoom(): InternalState {
           BodyType.Brick1),
         color: 0xFFFFFF,
       };
-      player1Bricks.push(brick);
+      result.push(brick);
     }
   }
+  return result;
+}
 
-  const player1: InternalPlayer = {
-    id: "",
-    ready: false,
-    score: 0,
-    direction: { x: 0, y: 0 },
-
-    bricks: player1Bricks,
-  };
-
-  const player2Bricks = [];
+function player2Bricks(physics: System): InternalBrick[] {
+  const result = [];
   for (var i = 0; i < row; i++) {
     for (var j = 0; j < col; j++) {
-
       if (j % 2 === 1 && i == row - 1) { continue; }
       const offset = (j % 2 === 1) ? 16 : 0;
-
-
       const brick = {
         id: row * col + i * col + j,
         brickType: BrickType.Normal,
@@ -503,33 +510,60 @@ function initializeRoom(): InternalState {
           BodyType.Brick2),
         color: 0xFFFFFF,
       };
-      player2Bricks.push(brick);
+      result.push(brick);
     }
   }
+  return result;
+}
+
+function initialBalls(physics: System): InternalBall[] {
+  return [{
+    id: 0,
+    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
+      { oType: BodyType.Ball }),
+    momentum: {
+      x: BALL_SPEED,
+      y: -BALL_SPEED
+    },
+  },
+
+  {
+    id: 1,
+    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
+      { oType: BodyType.Ball }),
+    momentum: {
+      x: -BALL_SPEED,
+      y: BALL_SPEED
+    },
+  }
+  ]
+}
+
+function initializeRoom(): InternalState {
+  const physics = new System();
+  const tileSize = map.tileSize;
+
+  const player1: InternalPlayer = {
+    id: "",
+    ready: false,
+    score: 0,
+    direction: { x: 0, y: 0 },
+    bricks: player1Bricks(physics),
+  };
 
   const player2: InternalPlayer = {
     id: "",
     ready: false,
     score: 0,
     direction: { x: 0, y: 0 },
-    bricks: player2Bricks,
+    bricks: player2Bricks(physics),
   };
 
   return {
     physics,
     player1,
     player2,
-    balls: [{
-      id: 0,
-      body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 4),
-        { oType: BodyType.Ball }),
-      momentum: {
-        x: BALL_SPEED,
-        y: -BALL_SPEED
-      }
-    },
-
-    ],
+    balls: initialBalls(physics),
 
   };
 }

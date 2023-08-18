@@ -64,6 +64,7 @@ export class GameScene extends Scene {
     this.load.image("brick", "brick.png");
     this.load.image("special_brick", "special_brick.png");
     this.load.image("bullet", "bullet.png");
+    this.load.audio("brickbreak", "232396__cejordi84__bricks.wav")
   }
 
   init({
@@ -242,8 +243,6 @@ export class GameScene extends Scene {
 
     const { state } = this.stateBuffer.getInterpolatedState(Date.now());
 
-    console.log(state.player1.ready, state.player2.ready);
-
     if (state.player1.id === this.currentUserID) {
       if (!state.player1.ready) {
         this.gameState?.setText("Press space when you're ready");
@@ -262,6 +261,24 @@ export class GameScene extends Scene {
       } else {
         this.gameState?.setText("");
       }
+    }
+
+    if (this.player1Score === undefined) {
+      this.player1Score = this.add
+        .text(500, 20, `P1 Score: ${state.player1.score}`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    } else {
+      this.player1Score.setText(`P1 Score: ${state.player1.score}`)
+    }
+
+    if (this.player2Score === undefined) {
+      this.player2Score = this.add
+        .text(500, 580, `P2 Score: ${state.player2.score}`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    } else {
+      this.player2Score.setText(`P2 Score: ${state.player2.score}`)
     }
 
     state.balls.forEach(ball => {
@@ -313,7 +330,7 @@ export class GameScene extends Scene {
     });
 
     this.balls.forEach((ball, id) => {
-      if (!state.balls.some(otherbrick => otherbrick.id === id)) {
+      if (!state.balls.some(otherBall => otherBall.id === id)) {
         ball.destroy();
         this.balls.delete(id);
       }
@@ -353,13 +370,21 @@ export class GameScene extends Scene {
       }
     });
 
+    var someBrickBroke = false;
+
     this.bricks.forEach((brick, id) => {
       if (!state.player1.bricks.some(otherbrick => otherbrick.id === id)
         && !state.player2.bricks.some(otherbrick => otherbrick.id === id)) {
         brick.destroy();
         this.bricks.delete(id);
+        someBrickBroke = true;
       }
     });
+
+    if (someBrickBroke) {
+      this.sound.pauseOnBlur = false;
+      this.sound.play("brickbreak", { volume: 0.25 });
+    }
   }
 }
 
