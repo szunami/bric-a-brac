@@ -1,49 +1,11 @@
-# Bullet Mania
-![Hathora presents Bullet Mania](/client/src/assets/screenshots/banner.png)
+# bric-a-brac
 
-## Overview 
+## Overview
 
-Multiplayer 2D shooter demo made using:
-  - [Phaser](https://phaser.io/) - Game framework
-  - [Hathora Cloud SDK](https://github.com/hathora/hathora-cloud-sdks) - Server hosting
-  - [Hathora Buildkits](https://github.com/hathora/buildkits) - Network transport
-  - [React](https://react.dev/) - Lobby UI
+![a screenshot of bric-a-brac](/screenshot.png)
 
-Assets from [Kenney](https://kenney.nl/assets/top-down-shooter)
 
-Additional implementations of the game client are also available for the following engines:
-  - [Unity](https://github.com/hathora/topdown-shooter-unity-client)
-  - [Bevy](https://github.com/hathora/topdown-shooter-bevy-client)
-
-## Try it
-
-The game is playable at https://bullet-mania.netlify.app
-
-Lobby            |  Gameplay
-:-------------------------:|:-------------------------:
-![A screenshot of the completed top-down shooter lobby.](/client/src/assets/screenshots/lobby_screenshot.png) |  ![A screenshot of the completed top-down shooter game in action.](/client/src/assets/screenshots/gameplay_screenshot_cropped.png)
-
-Instructions:
-
-  - **WASD** to move
-  - **Mouse** to aim and shoot
-  - **Spacebar** to dash
-  - **R** to reload
-  - Once you are in a game, share the URL to allow others to join
-
-## Architecture
-
-Fully server authoritative game:
-- Client sends user inputs to server
-- Server processes the inputs and runs game simulation (at 20fps)
-- Server broadcasts state snapshots to clients (at 20fps)
-- Client interpolates the state snapshots and renders the game UI (at 60fps)
-- No prediction on the client side
-
-Room based architecture:
-- One player creates a game session and gets back a `roomId`
-- They send the `roomId` to others
-- Others can join the same session with this `roomId`
+bric a brac is a 2 player variant of the atari classic breakout built using [Hathora](https://hathora.dev/).
 
 ## Running locally 
 
