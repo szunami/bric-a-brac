@@ -27,9 +27,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="3.8716715"
-     inkscape:cx="81.360208"
-     inkscape:cy="70.770467"
+     inkscape:zoom="5.6904862"
+     inkscape:cx="49.204935"
+     inkscape:cy="39.012484"
      inkscape:window-width="1440"
      inkscape:window-height="872"
      inkscape:window-x="0"
@@ -45,7 +45,7 @@
      transform="translate(-43.305084,-131.3983)">
     <path
        id="rect184"
-       style="fill:#ffffff;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000;fill-opacity:1;stroke-opacity:1"
+       style="fill:#884b2b;stroke:#c7cfcc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stop-color:#000000;fill-opacity:1;stroke-opacity:1"
        d="m 43.805084,131.8983 h 31 v 7 h -31 z"
        sodipodi:nodetypes="ccccc" />
   </g>

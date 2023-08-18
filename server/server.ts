@@ -456,16 +456,20 @@ function initializeRoom(): InternalState {
   const player1Bricks = [];
   for (var i = 0; i < row; i++) {
     for (var j = 0; j < col; j++) {
+
+      if (j % 2 === 1 && i == row - 1) { continue; }
+      const offset = (j % 2 === 1) ? 16 : 0;
+
       const brick = {
         id: i * col + j,
         brickType: BrickType.Normal,
         body: makeBox(physics,
-          -32 * row / 2 + 32 * i,
+          offset + -32 * row / 2 + 32 * i,
           150 + 16 * j,
           1,
-          4,
+          2,
           BodyType.Brick1),
-        color: 0x602c2c,
+        color: 0xFFFFFF,
       };
       player1Bricks.push(brick);
     }
@@ -483,16 +487,21 @@ function initializeRoom(): InternalState {
   const player2Bricks = [];
   for (var i = 0; i < row; i++) {
     for (var j = 0; j < col; j++) {
+
+      if (j % 2 === 1 && i == row - 1) { continue; }
+      const offset = (j % 2 === 1) ? 16 : 0;
+
+
       const brick = {
         id: row * col + i * col + j,
         brickType: BrickType.Normal,
         body: makeBox(physics,
-          -32 * row / 2 + 32 * i,
+          offset + -32 * row / 2 + 32 * i,
           -150 - 16 * j,
           1,
-          4,
+          2,
           BodyType.Brick2),
-        color: 0xbe772b,
+        color: 0xFFFFFF,
       };
       player2Bricks.push(brick);
     }
