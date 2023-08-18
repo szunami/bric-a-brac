@@ -3,6 +3,7 @@ import { Direction, GameState } from "./types";
 export enum ClientMessageType {
   SetNickname,
   SetDirection,
+  SetReady,
   Ping,
 }
 
@@ -14,6 +15,7 @@ export enum ServerMessageType {
 export type ClientMessage =
   | SetNicknameMessage
   | SetDirectionMessage
+  | SetReadyMessage
   | PingMessage;
 
 export type SetDirectionMessage = {
@@ -25,6 +27,10 @@ export type SetNicknameMessage = {
   type: ClientMessageType.SetNickname;
   nickname: string;
 };
+
+export type SetReadyMessage = {
+  type: ClientMessageType.SetReady;
+}
 
 export type PingMessage = {
   type: ClientMessageType.Ping;

@@ -17,6 +17,7 @@ export type XY = {
 
 export type Player = {
   id: string;
+  ready: boolean;
   score: number;
 
   bricks: Brick[];
