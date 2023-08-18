@@ -173,14 +173,18 @@ export class GameScene extends Scene {
     }, 1000);
 
     // Handle keyboard input
-    const keys = this.input.keyboard.addKeys("W,S,A,D,SPACE") as {
+    const keys = this.input.keyboard.addKeys("W,S,A,D,UP,LEFT,RIGHT,DOWN,SPACE") as {
       W: Phaser.Input.Keyboard.Key;
       S: Phaser.Input.Keyboard.Key;
       A: Phaser.Input.Keyboard.Key;
       D: Phaser.Input.Keyboard.Key;
+      UP: Phaser.Input.Keyboard.Key;
+      LEFT: Phaser.Input.Keyboard.Key;
+      RIGHT: Phaser.Input.Keyboard.Key;
+      DOWN: Phaser.Input.Keyboard.Key;
+      SPACE: Phaser.Input.Keyboard.Key;
     };
-    const keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    const keyR = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+
     let prevDirection = {
       x: 0,
       y: 0,
@@ -192,17 +196,17 @@ export class GameScene extends Scene {
         x: 0,
         y: 0,
       };
-      if (keys.W.isDown) {
+      if (keys.W.isDown || keys.UP.isDown) {
         direction.y = -1;
-      } else if (keys.S.isDown) {
+      } else if (keys.S.isDown || keys.DOWN.isDown) {
         direction.y = 1;
       } else {
         direction.y = 0;
       }
 
-      if (keys.D.isDown) {
+      if (keys.D.isDown || keys.RIGHT.isDown) {
         direction.x = 1;
-      } else if (keys.A.isDown) {
+      } else if (keys.A.isDown || keys.LEFT.isDown) {
         direction.x = -1;
       } else {
         direction.x = 0;
@@ -214,7 +218,7 @@ export class GameScene extends Scene {
         this.connection?.writeJson({ type: ClientMessageType.SetDirection, direction });
       }
 
-      if (keySpace.isDown) {
+      if (keys.SPACE.isDown) {
         this.connection?.writeJson({ type: ClientMessageType.SetReady });
       }
     };
