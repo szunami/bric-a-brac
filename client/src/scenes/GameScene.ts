@@ -38,6 +38,9 @@ export class GameScene extends Scene {
   private player1Score: Phaser.GameObjects.Text | undefined = undefined;
   private player2Score: Phaser.GameObjects.Text | undefined = undefined;
 
+  private helpText: Phaser.GameObjects.Text | undefined = undefined;
+
+
   // The previous tick's aim radians (used to check if aim has changed, before sending an update)
   private prevAimRad = 0;
   // Ammo indicator assets
@@ -267,22 +270,38 @@ export class GameScene extends Scene {
       }
     }
 
+    if (state.player1.id === this.currentUserID
+      && this.helpText === undefined
+    ) {
+      this.helpText = this.add.text(550, 100, `this is you!`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    }
+
+    if (state.player2.id === this.currentUserID
+      && this.helpText === undefined
+    ) {
+      this.helpText = this.add.text(550, 480, `this is you!`, { color: "white" })
+        .setAlpha(0.8)
+        .setScrollFactor(0);
+    }
+
     if (this.player1Score === undefined) {
       this.player1Score = this.add
-        .text(500, 20, `P1 Score: ${state.player1.score}`, { color: "white" })
+        .text(550, 80, `bric score: ${state.player1.score}`, { color: "white" })
         .setAlpha(0.8)
         .setScrollFactor(0);
     } else {
-      this.player1Score.setText(`P1 Score: ${state.player1.score}`)
+      this.player1Score.setText(`bric score: ${state.player1.score}`)
     }
 
     if (this.player2Score === undefined) {
       this.player2Score = this.add
-        .text(500, 580, `P2 Score: ${state.player2.score}`, { color: "white" })
+        .text(550, 500, `brac score: ${state.player2.score}`, { color: "white" })
         .setAlpha(0.8)
         .setScrollFactor(0);
     } else {
-      this.player2Score.setText(`P2 Score: ${state.player2.score}`)
+      this.player2Score.setText(`brac Score: ${state.player2.score}`)
     }
 
     state.balls.forEach(ball => {

@@ -362,7 +362,6 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
   game.balls.forEach((ball) => {
     if (ball.body.maxX > 128) {
-      console.log(`Flipipng ball x`);
       ball.body.x = 120;
       ball.momentum.x = -BALL_SPEED;
     }
@@ -517,25 +516,26 @@ function player2Bricks(physics: System): InternalBrick[] {
 }
 
 function initialBalls(physics: System): InternalBall[] {
-  return [{
-    id: 0,
-    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
-      { oType: BodyType.Ball }),
-    momentum: {
-      x: BALL_SPEED,
-      y: -BALL_SPEED
+  return [
+    {
+      id: 0,
+      body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
+        { oType: BodyType.Ball }),
+      momentum: {
+        x: BALL_SPEED,
+        y: -BALL_SPEED
+      },
     },
-  },
 
-  {
-    id: 1,
-    body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
-      { oType: BodyType.Ball }),
-    momentum: {
-      x: -BALL_SPEED,
-      y: BALL_SPEED
-    },
-  }
+    {
+      id: 1,
+      body: Object.assign(physics.createCircle({ x: 0, y: 0 }, 8),
+        { oType: BodyType.Ball }),
+      momentum: {
+        x: -BALL_SPEED,
+        y: BALL_SPEED
+      },
+    }
   ]
 }
 
