@@ -27,8 +27,6 @@ export class GameScene extends Scene {
   // A map of bullet sprites currently in-air
   private bricks: Map<number, Phaser.GameObjects.Sprite> = new Map();
   private balls: Map<number, Phaser.GameObjects.Sprite> = new Map();
-  private balls2: Map<number, Phaser.GameObjects.Sprite> = new Map();
-  private balls3: Map<number, Phaser.GameObjects.Sprite> = new Map();
   // The Hathora user for the current client's connected player
   private currentUserID: string | undefined;
   // The current client's connected player's sprite object
@@ -273,7 +271,7 @@ export class GameScene extends Scene {
     if (state.player1.id === this.currentUserID
       && this.helpText === undefined
     ) {
-      this.helpText = this.add.text(550, 100, `this is you!`, { color: "white" })
+      this.helpText = this.add.text(550, 480, `this is you!`, { color: "white" })
         .setAlpha(0.8)
         .setScrollFactor(0);
     }
@@ -281,7 +279,7 @@ export class GameScene extends Scene {
     if (state.player2.id === this.currentUserID
       && this.helpText === undefined
     ) {
-      this.helpText = this.add.text(550, 480, `this is you!`, { color: "white" })
+      this.helpText = this.add.text(550, 100, `this is you!`, { color: "white" })
         .setAlpha(0.8)
         .setScrollFactor(0);
     }
@@ -301,36 +299,10 @@ export class GameScene extends Scene {
         .setAlpha(0.8)
         .setScrollFactor(0);
     } else {
-      this.player2Score.setText(`brac Score: ${state.player2.score}`)
+      this.player2Score.setText(`brac score: ${state.player2.score}`)
     }
 
     state.balls.forEach(ball => {
-      if (!this.balls3.has(ball.id)) {
-        this.balls3.set(ball.id, this.add.sprite(
-          ball.position.x,
-          ball.position.y,
-          "bullet"
-        ));
-      } else {
-        const ball2 = this.balls2.get(ball.id);
-        if (ball2) {
-          this.balls3.get(ball.id)?.setPosition(ball2.x, ball2.y);
-        }
-      }
-
-      if (!this.balls2.has(ball.id)) {
-        this.balls2.set(ball.id, this.add.sprite(
-          ball.position.x,
-          ball.position.y,
-          "bullet"
-        ));
-      } else {
-        const ball1 = this.balls.get(ball.id);
-        if (ball1) {
-          this.balls2.get(ball.id)?.setPosition(ball1.x, ball1.y);
-        }
-      }
-
       if (!this.balls.has(ball.id)) {
         this.balls.set(ball.id, this.add.sprite(
           ball.position.x,
@@ -339,16 +311,6 @@ export class GameScene extends Scene {
         ));
       } else {
         this.balls.get(ball.id)?.setPosition(ball.position.x, ball.position.y);
-      }
-
-      if (!this.balls2.has(ball.id)) {
-        this.balls2.set(ball.id, this.add.sprite(
-          ball.position.x,
-          ball.position.y,
-          "bullet"
-        ));
-      } else {
-        this.balls2.get(ball.id)?.setPosition(ball.position.x, ball.position.y);
       }
     });
 

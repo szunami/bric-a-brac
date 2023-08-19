@@ -360,7 +360,11 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
 
   const ballSlowdown = 15 + game.player1.bricks.length + game.player2.bricks.length;
 
-  game.balls.forEach((ball) => {
+  var ballIdx = 0;
+
+  while (ballIdx < game.balls.length) {
+    const ball = game.balls[ballIdx];
+    var removeBall = false;
     if (ball.body.maxX > 128) {
       ball.body.x = 120;
       ball.momentum.x = -BALL_SPEED;
@@ -371,35 +375,55 @@ async function tick(roomId: string, game: InternalState, deltaMs: number) {
     }
     if (ball.body.maxY > 220) {
       game.player1.score++;
+      removeBall = true;
 
-      game.player1.ready = false;
-      game.player2.ready = false;
+      game.balls.splice(ballIdx, 1);
 
-      game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
-      game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
-      game.player1.bricks = player1Bricks(game.physics);
-      game.player2.bricks = player2Bricks(game.physics);
+      if (game.balls.length > 0) {
+        game.physics.remove(ball.body);
+      } else {
+        game.player1.ready = false;
+        game.player2.ready = false;
 
-      game.balls.forEach((ball) => game.physics.remove(ball.body));
-      game.balls = initialBalls(game.physics);
+        game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
+        game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
+        game.player1.bricks = player1Bricks(game.physics);
+        game.player2.bricks = player2Bricks(game.physics);
+
+        game.balls.forEach((ball) => game.physics.remove(ball.body));
+        game.balls = initialBalls(game.physics);
+      }
     }
     if (ball.body.minY < -220) {
       game.player2.score++;
+      removeBall = true;
 
-      game.player1.ready = false;
-      game.player2.ready = false;
+      game.balls.splice(ballIdx, 1);
 
-      game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
-      game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
+      if (game.balls.length > 0) {
+        game.physics.remove(ball.body);
+      } else {
+        game.player1.ready = false;
+        game.player2.ready = false;
 
-      game.player1.bricks = player1Bricks(game.physics);
-      game.player2.bricks = player2Bricks(game.physics);
-      game.balls = initialBalls(game.physics);
+        game.player1.bricks.forEach((brick) => game.physics.remove(brick.body));
+        game.player2.bricks.forEach((brick) => game.physics.remove(brick.body));
+        game.player1.bricks = player1Bricks(game.physics);
+        game.player2.bricks = player2Bricks(game.physics);
+
+        game.balls.forEach((ball) => game.physics.remove(ball.body));
+        game.balls = initialBalls(game.physics);
+      }
     }
 
     ball.body.x = ball.body.x + ball.momentum.x * deltaMs / ballSlowdown;
     ball.body.y = ball.body.y + ball.momentum.y * deltaMs / ballSlowdown;
-  });
+
+    if (!removeBall) {
+      ballIdx++;
+    }
+
+  }
 }
 
 function broadcastStateUpdate(roomId: RoomId) {
